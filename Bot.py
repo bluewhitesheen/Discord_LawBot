@@ -159,7 +159,8 @@ async def on_message(message):
                                 respMessage += art[i].text + "\n"
                             await message.channel.send(respMessage)
                             break
-            except:
+            except Exception as e:
+                print(e) 
                 await message.channel.send("誒都，閣下的指令格式我解析有點問題誒QQ")
 # Discord Bot TOKEN
 client.run('OTM0ODQ2MDYxNTA2MzM0NzQy.Ye2BPQ.4FRER46JDoSa9V0iyPF1G4dp2oo')
