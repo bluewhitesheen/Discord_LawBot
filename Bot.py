@@ -72,17 +72,22 @@ lawDict = {
 }
 
 #調用 event 函式庫
+
+
 @client.event
 #當機器人完成啟動時
 async def on_ready():
     print('目前登入身份：', client.user)
 
+
 @client.event
 #當有訊息時
 async def on_message(message):
     #排除自己的訊息，避免陷入無限循環
-    if message.author == client.user: return
-    if len(message.content) == 0: return
+    if message.author == client.user:
+        return
+    if len(message.content) == 0:
+        return
 
     queryStr = message.content
     queryStr = queryStr.replace('！', '!')
@@ -97,12 +102,12 @@ async def on_message(message):
                 break
         # 將指令拆成法條跟項號
         for i in range(len(queryStr)):
-            if queryStr[i].isalpha():
+            if queryStr[i].encode('utf-8').isalpha():
                 queryStr = queryStr[:i] + ' ' + queryStr[i:]
                 break
+        print(queryStr)
         queryStr = queryStr.split()
-        
-        
+
         if len(queryStr) == 1:
             if queryStr[0] in ("h", "help"):
                 helpMessage = "使用方式: ! + 法規名稱（或釋字） + 條號，例如：!刑309, !釋509, ！公司法189\n目前支援的法條：\n"
@@ -110,45 +115,51 @@ async def on_message(message):
                 for key in lawDict.keys():
                     await message.channel.send(key + "\n")
 
-
         if len(queryStr) >= 2:
             try:
                 if queryStr[0] in ("釋字", "大法官解釋", "釋"):
                     urlDisplay = "<https://cons.judicial.gov.tw/docdata.aspx?fid=100&id=" + \
-                            str(int(queryStr[1]) + 310181 + (queryStr[1] == '813') * (14341)) + ">"
-                    url = "https://law.moj.gov.tw/LawClass/ExContent.aspx?media=print&ty=C&CC=D&CNO=" + queryStr[1]
+                        str(int(queryStr[1]) + 310181 +
+                            (queryStr[1] == '813') * (14341)) + ">"
+                    url = "https://law.moj.gov.tw/LawClass/ExContent.aspx?media=print&ty=C&CC=D&CNO=" + \
+                        queryStr[1]
                     await message.channel.send(urlDisplay)
                     resp = requests.get(url)
                     soup = BeautifulSoup(resp.text, 'lxml')
                     # 前面的瑣碎資訊
                     art = soup.select('div.col-td')
-                    for i in range(len(art)): 
+                    for i in range(len(art)):
                         if i == 1 or i == 2:
                             respMessage = art[i].text.strip()
                             await message.channel.send(respMessage)
                     # 解釋文
                     art = soup.select('div.font-s')
-                    for i in art: 
+                    for i in art:
                         #respMessage = i.text.strip()
                         respMessage = i.text
                         await message.channel.send(respMessage)
                 else:
-                    if queryStr[0][-1:] == "法": queryStr[0] = queryStr[0][:-1]
-                    if queryStr[0][-2:] == "條例": queryStr[0] = queryStr[0][:-2]
-                    print(queryStr)
+                    if queryStr[0][-1:] == "法":
+                        queryStr[0] = queryStr[0][:-1]
+                    if queryStr[0][-2:] == "條例":
+                        queryStr[0] = queryStr[0][:-2]
 
                     for key, value in lawDict.items():
                         if queryStr[0] in key:
-                            url = "https://law.moj.gov.tw/LawClass/LawSingle.aspx?PCode=" + value + "&flno=" + queryStr[1]
+                            url = "https://law.moj.gov.tw/LawClass/LawSingle.aspx?PCode=" + \
+                                value + "&flno=" + queryStr[1]
                             print(url)
                             resp = requests.get(url)
                             soup = BeautifulSoup(resp.text, 'lxml')
-                            art = soup.select('div.law-article')[0].find_all('div')
+                            art = soup.select(
+                                'div.law-article')[0].select('div')
+                            print(art)
                             respMessage = ""
                             for i in range(len(art)):
                                 respMessage += art[i].text + "\n"
                             await message.channel.send(respMessage)
+                            break
             except:
                 await message.channel.send("誒都，閣下的指令格式我解析有點問題誒QQ")
 # Discord Bot TOKEN
-client.run('OTM0ODQ2MDYxNTA2MzM0NzQy.Ye2BPQ.4FRER46JDoSa9V0iyPF1G4dp2oo') 
+client.run('OTM0ODQ2MDYxNTA2MzM0NzQy.Ye2BPQ.4FRER46JDoSa9V0iyPF1G4dp2oo')
