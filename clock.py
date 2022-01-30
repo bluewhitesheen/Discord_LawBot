@@ -3,7 +3,6 @@ import requests
 
 sched = BlockingScheduler()
 
-
 @sched.scheduled_job('interval', minutes=3)
 def scheduled_job():
     url = "https://discord-law-bot.herokuapp.com/"

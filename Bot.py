@@ -39,11 +39,11 @@ lawDict = {
     ("銀行"): "G0380001",
     ("票據"): "G0380028",
     ("有限合夥"): "J0080051",
-
-    # 選試：智財法
     ("著", "著作", "著作權"): "J0070017",
     ("商標"): "J0070001",
     ("專利"): "J0070007",
+    ("公交", "公平交易"): "J0150002",
+    ("消保", "消費者保護"): "J0170001",
 
     # 選試：財稅法
     ("財劃", "財政收支劃分"): "G0320015",
@@ -63,17 +63,14 @@ lawDict = {
     ("海商"): "K0070002",
 
     # 自己想加或別人許願的法條OuO
-    ("公交", "公平交易"): "J0150002",
+    
     ("土", "土地"): "D0060001",
-    ("消保", "消費者保護"): "J0170001",
     ("通保", "通監", "通訊保障及監察"): "K0060044",
     ("國民法官"): "A0030320",
     ("公寓", "公寓大廈", "公寓大廈管理"): "D0070118",
 }
 
 #調用 event 函式庫
-
-
 @client.event
 #當機器人完成啟動時
 async def on_ready():
@@ -107,13 +104,6 @@ async def on_message(message):
                 break
         print(queryStr)
         queryStr = queryStr.split()
-
-        if len(queryStr) == 1:
-            if queryStr[0] in ("h", "help"):
-                helpMessage = "使用方式: ! + 法規名稱（或釋字） + 條號，例如：!刑309, !釋509, ！公司法189\n目前支援的法條：\n"
-                await message.channel.send(helpMessage)
-                for key in lawDict.keys():
-                    await message.channel.send(key + "\n")
 
         if len(queryStr) >= 2:
             try:
