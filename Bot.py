@@ -19,7 +19,6 @@ lawDict = {
     ("行政法人"): "A0010102",
     ("海商"): "K0070002",
     ("通保", "通監", "通訊保障及監察"): "K0060044",
-    ("國民法官"): "A0030320",
     ("公寓", "公寓大廈", "公寓大廈管理"): "D0070118",
 
     # 民法（原諒我將法組放在這邊，我暫時沒什麼頭緒）
@@ -80,7 +79,6 @@ async def on_message(message):
         return
     if len(message.content) == 0:
         return
-
     queryStr = message.content
     queryStr = queryStr.replace('！', '!')
     queryStr = queryStr.replace('－', '-')
@@ -147,12 +145,13 @@ async def on_message(message):
                         queryStr[0] = queryStr[0][:-2]
 
                     for key, value in lawDict.items():
+                        print(key, value)
                         if queryStr[0] in key:
                             url = "https://law.moj.gov.tw/LawClass/LawSingle.aspx?PCode=" + \
                                 value + "&flno=" + queryStr[1]
                             print(url)
                             resp = requests.get(url)
-                            soup = BeautifulSoup(resp.text, 'lxml')
+                            soup = BeautifulSoup(resp.text, 'html5lib')
                             art = soup.select('div.law-article')[0].select('div')
                             print(art)
                             respMessage = ""
