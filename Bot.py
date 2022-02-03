@@ -17,6 +17,10 @@ lawDict = {
     ("國賠", "國家賠償"): "I0020004",
     ("地制", "地方制度"): "A0040003",
     ("行政法人"): "A0010102",
+    ("海商"): "K0070002",
+    ("通保", "通監", "通訊保障及監察"): "K0060044",
+    ("國民法官"): "A0030320",
+    ("公寓", "公寓大廈", "公寓大廈管理"): "D0070118",
 
     # 民法（原諒我將法組放在這邊，我暫時沒什麼頭緒）
     ("民"): "B0000001",
@@ -24,6 +28,7 @@ lawDict = {
     ("家事", "家事事件"): "B0010048",
     ("法組", "法院組織"): "A0010053",
     ("強制", "強制執行"): "B0010004",
+    ("土", "土地"): "D0060001",
 
     #刑法
     ("刑", "中華民國刑"): "C0000001",
@@ -58,16 +63,6 @@ lawDict = {
     ("勞動基準法施行細則"): "N0030002",
     ("勞資爭議處理"): "N0020007",
     ("勞保", "勞工保險"): "N0050001",
-
-    # 選試：海商法
-    ("海商"): "K0070002",
-
-    # 自己想加或別人許願的法條OuO
-    
-    ("土", "土地"): "D0060001",
-    ("通保", "通監", "通訊保障及監察"): "K0060044",
-    ("國民法官"): "A0030320",
-    ("公寓", "公寓大廈", "公寓大廈管理"): "D0070118",
 }
 
 #調用 event 函式庫
@@ -108,26 +103,43 @@ async def on_message(message):
         if len(queryStr) >= 2:
             try:
                 if queryStr[0] in ("釋字", "大法官解釋", "釋"):
-                    urlDisplay = "<https://cons.judicial.gov.tw/docdata.aspx?fid=100&id=" + \
-                        str(int(queryStr[1]) + 310181 +
-                            (queryStr[1] == '813') * (14341)) + ">"
-                    url = "https://law.moj.gov.tw/LawClass/ExContent.aspx?media=print&ty=C&CC=D&CNO=" + \
-                        queryStr[1]
-                    await message.channel.send(urlDisplay)
+                    url = "https://cons.judicial.gov.tw/docdata.aspx?fid=100&id=" + \
+                        str(int(queryStr[1]) + 310181 + (queryStr[1] == '813') * (14341))
+                    await message.channel.send("<" + url + ">")
+
                     resp = requests.get(url)
-                    soup = BeautifulSoup(resp.text, 'lxml')
-                    # 前面的瑣碎資訊
-                    art = soup.select('div.col-td')
-                    for i in range(len(art)):
-                        if i == 1 or i == 2:
-                            respMessage = art[i].text.strip()
-                            await message.channel.send(respMessage)
-                    # 解釋文
-                    art = soup.select('div.font-s')
-                    for i in art:
-                        #respMessage = i.text.strip()
-                        respMessage = i.text
-                        await message.channel.send(respMessage)
+                    soup = BeautifulSoup(resp.text, 'html5lib')
+
+                    section = soup.find('div', class_='lawList').find_all('li')
+                    respMessage = ''
+                    flag = 1
+                    for i in range(len(section)):
+                        # 過濾不想要的章節
+                        if section[i].text in ("解釋公布院令", "解釋更正院令", "理由書"): flag = 0
+                        elif section[i].text in ("解釋字號", "解釋爭點", "解釋文"): flag = 1
+                        if section[i].text == "意見書": break
+                        if flag == 0:  continue
+
+                        # 輸出過濾後的部分
+                        if len(section[i].find_all('li')) > 0:
+                            continue
+                        else:
+                            # 拆分 tag 是 title 還是 text
+                            if 'class="title"' in str(section[i]):
+                                await message.channel.send('----------------------------------------------\n' + section[i].text.strip() + "\n")
+                            else:
+                                paragraph = section[i].find('pre')
+                                # 因為解釋文跟理由書的架構為 li > (label -> pre)，我們只要 pre 的部分
+                                # pre 只會有一個，所以直接用 find()
+                                if paragraph != None:
+                                    tmp = paragraph.text.strip()
+                                    if tmp.find('大法官會議主席') != -1:
+                                        break
+                                    else:
+                                        await message.channel.send(tmp + "\n")
+                                else:
+                                    await message.channel.send(section[i].text.strip() + "\n")
+
                 else:
                     if queryStr[0][-1:] == "法":
                         queryStr[0] = queryStr[0][:-1]
@@ -141,8 +153,7 @@ async def on_message(message):
                             print(url)
                             resp = requests.get(url)
                             soup = BeautifulSoup(resp.text, 'lxml')
-                            art = soup.select(
-                                'div.law-article')[0].select('div')
+                            art = soup.select('div.law-article')[0].select('div')
                             print(art)
                             respMessage = ""
                             for i in range(len(art)):
