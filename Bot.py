@@ -82,7 +82,8 @@ async def on_message(message):
     queryStr = message.content
     queryStr = queryStr.replace('！', '!')
     queryStr = queryStr.replace('－', '-')
-    if queryStr[-1] == '條': queryStr = queryStr[:-1] 
+    if queryStr[-1] == '條': queryStr = queryStr[:-1]
+    if queryStr[-1] == '號': queryStr = queryStr[:-1]
 
     if queryStr[0] == '!':
         queryStr = queryStr[1:]
@@ -144,7 +145,6 @@ async def on_message(message):
                     if queryStr[0][-2:] == "條例": queryStr[0] = queryStr[0][:-2]
 
                     for key, value in lawDict.items():
-                        print(key, value)
                         if queryStr[0] in key:
                             url = "https://law.moj.gov.tw/LawClass/LawSingle.aspx?PCode=" + \
                                 value + "&flno=" + queryStr[1]
@@ -152,7 +152,6 @@ async def on_message(message):
                             resp = requests.get(url)
                             soup = BeautifulSoup(resp.text, 'html5lib')
                             art = soup.select('div.law-article')[0].select('div')
-                            print(art)
                             respMessage = ""
                             for i in range(len(art)):
                                 respMessage += art[i].text + "\n"
