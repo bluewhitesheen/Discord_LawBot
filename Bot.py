@@ -1,3 +1,4 @@
+from winreg import QueryReflectionKey
 import roman
 import discord
 import requests
@@ -72,25 +73,25 @@ async def on_ready():
 
 
 @client.event
-#當有訊息時
 async def on_message(message):
-    #排除自己的訊息，避免陷入無限循環
-    if message.author == client.user:
-        return
-    if len(message.content) == 0:
-        return
+    if message.author == client.user: return
+    if len(message.content) == 0: return
+
+    # 切割指令
+    # 替換字元
     queryStr = message.content
     queryStr = queryStr.replace('！', '!')
     queryStr = queryStr.replace('－', '-')
+    if queryStr[-1] == '條': queryStr = queryStr[:-1] 
 
     if queryStr[0] == '!':
         queryStr = queryStr[1:]
-        # 將指令拆成中文跟法條
+    # 將指令拆成中文跟法條
         for i in range(len(queryStr)):
             if queryStr[i].isascii():
                 queryStr = queryStr[:i] + ' ' + queryStr[i:]
                 break
-        # 將指令拆成法條跟項號
+    # 將指令拆成法條跟項號
         for i in range(len(queryStr)):
             if queryStr[i].encode('utf-8').isalpha():
                 queryStr = queryStr[:i] + ' ' + queryStr[i:]
@@ -139,10 +140,8 @@ async def on_message(message):
                                     await message.channel.send(section[i].text.strip() + "\n")
 
                 else:
-                    if queryStr[0][-1:] == "法":
-                        queryStr[0] = queryStr[0][:-1]
-                    if queryStr[0][-2:] == "條例":
-                        queryStr[0] = queryStr[0][:-2]
+                    if queryStr[0][-1:] == "法": queryStr[0] = queryStr[0][:-1]
+                    if queryStr[0][-2:] == "條例": queryStr[0] = queryStr[0][:-2]
 
                     for key, value in lawDict.items():
                         print(key, value)
