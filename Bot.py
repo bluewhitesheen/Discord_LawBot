@@ -83,6 +83,7 @@ async def on_message(message):
     queryStr = message.content
     queryStr = queryStr.replace('！', '!')
     queryStr = queryStr.replace('－', '-')
+    queryStr = queryStr.replace('？', '?')
     if queryStr[-1] == '條': queryStr = queryStr[:-1]
     if queryStr[-1] == '號': queryStr = queryStr[:-1]
 
@@ -100,6 +101,12 @@ async def on_message(message):
                 break
         print(queryStr)
         queryStr = queryStr.split()
+
+        if len(queryStr) == 1:
+            if queryStr[0] in ("?", "使用說明", "說明"): 
+                usage = open("usage.md", mode = "r", encoding = "utf-8")
+                respMessage = "```markdown\n" + usage.read() + "```\n"
+                await message.channel.send(respMessage)
 
         if len(queryStr) >= 2:
             try:
