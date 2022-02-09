@@ -1,5 +1,3 @@
-from winreg import QueryReflectionKey
-import roman
 import discord
 import requests
 from bs4 import BeautifulSoup
