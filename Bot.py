@@ -28,7 +28,7 @@ lawDict = {
     ("民訴", "民事訴訟", ): "B0010001",
     ("家事", "家事事件", ): "B0010048",
     ("法組", "法院組織", ): "A0010053",
-    ("強制", "強制執行", ): "B0010004",
+    ("強制", "強制執行", "強執"): "B0010004",
     ("土", "土地", ): "D0060001",
 
     #刑法
@@ -103,7 +103,7 @@ async def on_message(message):
         queryStr = queryStr.split()
 
         if len(queryStr) == 1:
-            if queryStr[0] in ("?", "使用說明", "說明"): 
+            if queryStr[0] in ("?", "使用說明", "說明", "使用", "使"): 
                 usage = open("usage.md", mode = "r", encoding = "utf-8")
                 respMessage = "```markdown\n" + usage.read() + "```\n"
                 await message.channel.send(respMessage)
