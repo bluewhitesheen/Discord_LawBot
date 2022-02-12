@@ -72,6 +72,9 @@ QueryDict = {}
 #當機器人完成啟動時
 async def on_ready():
     print('目前登入身份：', client.user)
+    for key, value in lawDict.items():
+        for i in key: QueryDict[i] = value
+    print('QueryDict is ready!')
 
 
 @client.event
