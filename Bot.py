@@ -64,11 +64,17 @@ lawDict = {
     ("勞保", "勞工保險", ): "N0050001",
 }
 
+# Query Dict is the expand of LawDict, O(n) prepprocess + O(lgN) each query
+QueryDict = {}
+
 #調用 event 函式庫
 @client.event
 #當機器人完成啟動時
 async def on_ready():
     print('目前登入身份：', client.user)
+    for key, value in lawDict.items():
+        for i in key: QueryDict[i] = value
+    print('QueryDict is ready!')
 
 
 @client.event
@@ -132,20 +138,18 @@ async def on_message(message):
                         else:
                             # 拆分 tag 是 title 還是 text
                             if 'class="title"' in str(section[i]):
-                                await message.channel.send('----------------------------------------------\n' + section[i].text.strip() + "\n")
+                                respMessage += '----------------------------------------------\n' + section[i].text.strip() + "\n"
                             else:
                                 paragraph = section[i].find('pre')
                                 # 因為解釋文跟理由書的架構為 li > (label -> pre)，我們只要 pre 的部分
                                 # pre 只會有一個，所以直接用 find()
                                 if paragraph != None:
                                     tmp = paragraph.text.strip()
-                                    if tmp.find('大法官會議主席') != -1:
-                                        break
-                                    else:
-                                        await message.channel.send(tmp + "\n")
+                                    if tmp.find('大法官會議主席') != -1: break
+                                    else: respMessage += tmp + "\n"
                                 else:
-                                    await message.channel.send(section[i].text.strip() + "\n")
-
+                                    respMessage += section[i].text.strip() + "\n"
+                    await message.channel.send(respMessage)
                 else:
                     if queryStr[0][-1:] == "法": queryStr[0] = queryStr[0][:-1]
                     if queryStr[0][-2:] == "條例": queryStr[0] = queryStr[0][:-2]
