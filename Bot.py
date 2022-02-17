@@ -67,6 +67,10 @@ lawDict = {
 
 # Query Dict is the expand of LawDict, O(n) prepprocess + O(lgN) each query
 QueryDict = {}
+# lawCode stands for the default lawCode value
+lawCode = ""
+# usage stands for the usage of the bot
+usage = open("usage.md", mode="r", encoding="utf-8").read()
 
 #調用 event 函式庫
 @client.event
@@ -75,8 +79,7 @@ async def on_ready():
     print('目前登入身份：', client.user)
     for key, value in lawDict.items():
         for i in key: QueryDict[i] = value
-    print('QueryDict is ready!')
-
+    
 
 @client.event
 async def on_message(message):
@@ -92,14 +95,14 @@ async def on_message(message):
     if queryStr[-1] == '條': queryStr = queryStr[:-1]
     if queryStr[-1] == '號': queryStr = queryStr[:-1]
 
-    if queryStr[0] == '!':
+    if queryStr[0] == '!' and queryStr[1] != '!':
         queryStr = queryStr[1:]
-    # 將指令拆成中文跟法條
+        # 將指令拆成中文跟法條
         for i in range(len(queryStr)):
             if queryStr[i].isascii():
                 queryStr = queryStr[:i] + ' ' + queryStr[i:]
                 break
-    # 將指令拆成法條跟項號
+        # 將指令拆成法條跟項號
         for i in range(len(queryStr)):
             if queryStr[i].encode('utf-8').isalpha():
                 queryStr = queryStr[:i] + ' ' + queryStr[i:]
@@ -109,9 +112,10 @@ async def on_message(message):
 
         if len(queryStr) == 1:
             if queryStr[0] in ("?", "使用說明", "說明", "使用", "使"): 
-                usage = open("usage.md", mode = "r", encoding = "utf-8")
-                respMessage = "```markdown\n" + usage.read() + "```\n"
+                respMessage = "```markdown\n" + usage + "```\n"
                 await message.channel.send(respMessage)
+            else: 
+                pass
 
         if len(queryStr) >= 2:
             try:
@@ -170,6 +174,20 @@ async def on_message(message):
                             break
             except Exception as e:
                 print(e) 
-                await message.channel.send("誒都，閣下的指令格式我解析有點問題誒QQ")
+                await message.channel.send("誒都，閣下的指令格式我解析有點問題誒QQ\n" \
+                                         + "```markdown\n" + usage + "```\n")
+    if queryStr[:2] == '!!': 
+        # Admin mode
+        if hash(message.author) == 94570165215:
+            queryStr = queryStr[2:]
+            queryStr = queryStr.split()
+            if queryStr[0] == 'set': 
+                if queryStr[1][-1:] == "法": queryStr[1] = queryStr[1][:-1]
+                if queryStr[1][-2:] == "條例": queryStr[1] = queryStr[1][:-2]
+                for key, value in lawDict.ltems():
+                    if queryStr[1] in key: 
+                        lawCode = value
+                        await message.channel.send('已將指令換成' + key[-1] + "!\n")
+
 # Discord Bot TOKEN
 client.run('OTM0ODQ2MDYxNTA2MzM0NzQy.Ye2BPQ.4FRER46JDoSa9V0iyPF1G4dp2oo')
