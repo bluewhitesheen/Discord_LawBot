@@ -68,9 +68,35 @@ lawDict = {
 # Query Dict is the expand of LawDict, O(n) prepprocess + O(lgN) each query
 QueryDict = {}
 # lawCode stands for the default lawCode value
-lawCode = ""
+lawCode = "A0030055"
 # usage stands for the usage of the bot
 usage = open("usage.md", mode="r", encoding="utf-8").read()
+
+
+def lawArcFind(law: str, num: str) -> str:
+    if law[-1:] == "法": law = law[:-1]
+    if law[-2:] == "條例": law = law[:-2]
+    print(law, num)
+    url = ""
+    if law.encode().isalnum():
+        url = "https://law.moj.gov.tw/LawClass/LawSingle.aspx?PCode=" + law + "&flno=" + num
+    else:
+        for key, value in lawDict.items():
+            if law in key:
+                url = "https://law.moj.gov.tw/LawClass/LawSingle.aspx?PCode=" + value + "&flno=" + num
+                break
+    print(url)
+    try:
+        resp = requests.get(url)
+        soup = BeautifulSoup(resp.text, 'html5lib')
+        art = soup.select('div.law-article')[0].select('div')
+        respMessage = ""
+        for i in range(len(art)):
+            respMessage += art[i].text + "\n"
+    except Exception as e:
+        print(e)
+        respMessage = ""
+    return respMessage
 
 #調用 event 函式庫
 @client.event
@@ -115,7 +141,11 @@ async def on_message(message):
                 respMessage = "```markdown\n" + usage + "```\n"
                 await message.channel.send(respMessage)
             else: 
-                pass
+                global lawCode
+                respMessage = lawArcFind(lawCode, queryStr[0])
+                if len(respMessage) == 0:
+                    respMessage = "抱歉，找不到餒QQ\n"
+                await message.channel.send(respMessage)
 
         if len(queryStr) >= 2:
             try:
@@ -156,22 +186,10 @@ async def on_message(message):
                                     respMessage += section[i].text.strip() + "\n"
                     await message.channel.send(respMessage)
                 else:
-                    if queryStr[0][-1:] == "法": queryStr[0] = queryStr[0][:-1]
-                    if queryStr[0][-2:] == "條例": queryStr[0] = queryStr[0][:-2]
-
-                    for key, value in lawDict.items():
-                        if queryStr[0] in key:
-                            url = "https://law.moj.gov.tw/LawClass/LawSingle.aspx?PCode=" + \
-                                value + "&flno=" + queryStr[1]
-                            print(url)
-                            resp = requests.get(url)
-                            soup = BeautifulSoup(resp.text, 'html5lib')
-                            art = soup.select('div.law-article')[0].select('div')
-                            respMessage = ""
-                            for i in range(len(art)):
-                                respMessage += art[i].text + "\n"
-                            await message.channel.send(respMessage)
-                            break
+                    respMessage = lawArcFind(queryStr[0], queryStr[1])
+                    if len(respMessage) == 0: respMessage = "抱歉，找不到餒QQ\n"
+                    await message.channel.send(respMessage)
+                    
             except Exception as e:
                 print(e) 
                 await message.channel.send("誒都，閣下的指令格式我解析有點問題誒QQ\n" \
@@ -182,12 +200,10 @@ async def on_message(message):
             queryStr = queryStr[2:]
             queryStr = queryStr.split()
             if queryStr[0] == 'set': 
-                if queryStr[1][-1:] == "法": queryStr[1] = queryStr[1][:-1]
-                if queryStr[1][-2:] == "條例": queryStr[1] = queryStr[1][:-2]
-                for key, value in lawDict.ltems():
+                for key, value in lawDict.items():
                     if queryStr[1] in key: 
                         lawCode = value
-                        await message.channel.send('已將指令換成' + key[-1] + "!\n")
+                        await message.channel.send('已將指令換成' + key[-1] + "(法/條例)!\n")
 
 # Discord Bot TOKEN
 client.run('OTM0ODQ2MDYxNTA2MzM0NzQy.Ye2BPQ.4FRER46JDoSa9V0iyPF1G4dp2oo')
