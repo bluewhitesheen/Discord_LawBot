@@ -62,7 +62,6 @@ lawDict = {
 
     # 選試：勞動社會法
     ("勞", "勞基", "勞動基準", ): "N0030001",
-    ("勞動基準法施行細則", ): "N0030002",
     ("勞資爭議處理", ): "N0020007",
     ("勞保", "勞工保險", ): "N0050001",
 }
@@ -78,7 +77,7 @@ usage = open("usage.md", mode="r", encoding="utf-8").read()
 def lawArcFind(law: str, num: str) -> str:
     if law[-1:] == "法": law = law[:-1]
     if law[-2:] == "條例": law = law[:-2]
-    print(law, num)
+    print(law.encode(), num, law.encode().isalnum())
     url = ""
     if law.encode().isalnum():
         url = "https://law.moj.gov.tw/LawClass/LawSingle.aspx?PCode=" + law + "&flno=" + num
@@ -87,7 +86,21 @@ def lawArcFind(law: str, num: str) -> str:
             if law in key:
                 url = "https://law.moj.gov.tw/LawClass/LawSingle.aspx?PCode=" + value + "&flno=" + num
                 break
-    print(url)
+    
+    # 若 url 字串仍然是空的，代表找不到
+    # 此時需要將關鍵字丟入全國法規資料庫歐的搜尋，並截取最有關係的法條
+    if url == "": 
+        kw = law
+        urlSearch = 'https://law.moj.gov.tw/Law/LawSearchResult.aspx?ty=ONEBAR&kw=' + kw + '&sSearch='
+        respSearch = requests.get(urlSearch)
+        soup = BeautifulSoup(respSearch.text, 'html5lib')
+        table = soup.find('table')
+
+        # Extract the link from HTML
+        # ref: https://stackoverflow.com/questions/65042243/adding-href-to-panda-read-html-df
+        pcode = [i[i.find('pcode=') + 6: i.find('pcode=') + 14] for i in [link.get('href') for link in table.find_all('a')] if "https://" in i][0]
+        return lawArcFind(pcode, num)
+
     try:
         resp = requests.get(url)
         soup = BeautifulSoup(resp.text, 'html5lib')
