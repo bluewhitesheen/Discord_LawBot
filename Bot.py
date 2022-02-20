@@ -19,7 +19,6 @@ lawDict = {
     ("海商", ): "K0070002",
     ("通保", "通監", "通訊保障及監察", ): "K0060044",
     ("公寓", "公寓大廈", "公寓大廈管理", ): "D0070118",
-    ("國民法官法", ): "A0030320",
 
     # 民法（原諒我將法組放在這邊，我暫時沒什麼頭緒）
     ("民", ): "B0000001",
@@ -57,8 +56,6 @@ lawDict = {
     ("遺贈", "遺產及贈與稅", ): "G0340072",
     ("營業", "營業稅", "加值型及非加值型營業稅", ): "G0340080",
     ("查準", "營所查準", "營利事業所得稅查核準則",): "G0340051",
-    ("土稅", "土地稅"): "G0340096",
-    ("印花", "印花稅"): "G0340091",
 
     # 選試：勞動社會法
     ("勞", "勞基", "勞動基準", ): "N0030001",
@@ -77,7 +74,6 @@ usage = open("usage.md", mode="r", encoding="utf-8").read()
 def lawArcFind(law: str, num: str) -> str:
     if law[-1:] == "法": law = law[:-1]
     if law[-2:] == "條例": law = law[:-2]
-    print(law.encode(), num, law.encode().isalnum())
     url = ""
     if law.encode().isalnum():
         url = "https://law.moj.gov.tw/LawClass/LawSingle.aspx?PCode=" + law + "&flno=" + num
@@ -98,10 +94,16 @@ def lawArcFind(law: str, num: str) -> str:
 
         # Extract the link from HTML
         # ref: https://stackoverflow.com/questions/65042243/adding-href-to-panda-read-html-df
-        pcode = [i[i.find('pcode=') + 6: i.find('pcode=') + 14] for i in [link.get('href') for link in table.find_all('a')] if "https://" in i][0]
+        result = [link for link in table.find_all('td')]
+        for i in range(len(result)):
+            if i % 2 == 1:
+                if 'label-fei' not in str(result[i]):
+                    pcode = result[i].find('a').get('href')[28:36]
+                    break
         return lawArcFind(pcode, num)
 
     try:
+        print(url)
         resp = requests.get(url)
         soup = BeautifulSoup(resp.text, 'html5lib')
         art = soup.select('div.law-article')[0].select('div')
@@ -155,6 +157,7 @@ async def on_message(message):
             if queryStr[0] in ("?", "使用說明", "說明", "使用", "使"): 
                 respMessage = "```markdown\n" + usage + "```\n"
                 await message.channel.send(respMessage)
+            elif queryStr[0].lower() in ("rank", "levels"): pass
             else: 
                 global lawCode
                 respMessage = lawArcFind(lawCode, queryStr[0])
@@ -208,7 +211,7 @@ async def on_message(message):
             except Exception as e:
                 print(e) 
                 await message.channel.send("誒都，閣下的指令格式我解析有點問題誒QQ\n" \
-                                         + "```markdown\n" + usage + "```\n")
+                                         + "可以輸入 !? 以獲得使用說明\n")
     if queryStr[:2] == '!!': 
         # Admin mode
         if hash(message.author) == 94570165215:
