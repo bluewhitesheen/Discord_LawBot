@@ -72,6 +72,7 @@ usage = open("usage.md", mode="r", encoding="utf-8").read()
 
 
 def lawArcFind(law: str, num: str) -> str:
+    lawold = law
     if law[-1:] == "法": law = law[:-1]
     if law[-2:] == "條例": law = law[:-2]
     url = ""
@@ -86,8 +87,9 @@ def lawArcFind(law: str, num: str) -> str:
     # 若 url 字串仍然是空的，代表找不到
     # 此時需要將關鍵字丟入全國法規資料庫歐的搜尋，並截取最有關係的法條
     if url == "": 
-        kw = law
+        kw = lawold
         urlSearch = 'https://law.moj.gov.tw/Law/LawSearchResult.aspx?ty=ONEBAR&kw=' + kw + '&sSearch='
+        print(urlSearch)
         respSearch = requests.get(urlSearch)
         soup = BeautifulSoup(respSearch.text, 'html5lib')
         table = soup.find('table')
