@@ -137,12 +137,12 @@ async def on_message(message):
     queryStr = queryStr.replace('！', '!')
     queryStr = queryStr.replace('－', '-')
     queryStr = queryStr.replace('？', '?')
-    queryStr = queryStr.strip()
     if queryStr[-1] == '條': queryStr = queryStr[:-1]
     if queryStr[-1] == '號': queryStr = queryStr[:-1]
 
     if queryStr[0] == '!' and queryStr[1] != '!':
         queryStr = queryStr[1:]
+        queryStr = queryStr.strip()
         # 將指令拆成中文跟法條
         for i in range(len(queryStr)):
             if queryStr[i].isascii():
