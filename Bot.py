@@ -137,6 +137,7 @@ async def on_message(message):
     queryStr = queryStr.replace('！', '!')
     queryStr = queryStr.replace('－', '-')
     queryStr = queryStr.replace('？', '?')
+    queryStr = queryStr.strip()
     if queryStr[-1] == '條': queryStr = queryStr[:-1]
     if queryStr[-1] == '號': queryStr = queryStr[:-1]
 
