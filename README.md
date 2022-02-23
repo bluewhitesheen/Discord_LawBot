@@ -24,3 +24,7 @@
 ### version 2.7.2
 * 修正其他法規的搜尋演算法（尋找 DOM element 是否包含 lebal-fei，故目前演算法暫不支援已廢棄法規
 * 修正 Error 的回傳訊息，以及修改 usage.md
+
+### version 2.7.5
+* 修正 requests 連線數過高之問題
+* 將 lawDict 文件化，並修改查詢函數邏輯
