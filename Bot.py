@@ -55,7 +55,7 @@ def lawArcFind(law: str, num: str) -> str:
             respMessage += art[i].text + "\n"
     except Exception as e:
         print(e)
-        respMessage = ""
+        respMessage = "抱歉，找不到餒QQ\n"
     return respMessage
 
 #調用 event 函式庫
@@ -75,9 +75,7 @@ async def on_message(message):
     # 切割指令
     # 替換字元
     queryStr = message.content
-    queryStr = queryStr.replace('！', '!')
-    queryStr = queryStr.replace('－', '-')
-    queryStr = queryStr.replace('？', '?')
+    queryStr = queryStr.replace('！', '!').replace('－', '-').replace('？', '?')
     if queryStr[-1] == '條': queryStr = queryStr[:-1]
     if queryStr[-1] == '號': queryStr = queryStr[:-1]
 
@@ -98,15 +96,12 @@ async def on_message(message):
         queryStr = queryStr.split()
 
         if len(queryStr) == 1:
-            if queryStr[0] in ("?", "使用說明", "說明", "使用", "使"): 
-                respMessage = "```markdown\n" + usage + "```\n"
-                await message.channel.send(respMessage)
+            if queryStr[0] == "?": 
+                await message.channel.send("```markdown\n" + usage + "```\n")
             elif queryStr[0].lower() in ("rank", "levels"): pass
             else: 
                 global lawCode
                 respMessage = lawArcFind(lawCode, queryStr[0])
-                if len(respMessage) == 0:
-                    respMessage = "抱歉，找不到餒QQ\n"
                 await message.channel.send(respMessage)
 
         if len(queryStr) >= 2:
@@ -114,13 +109,12 @@ async def on_message(message):
                 if queryStr[0] in ("釋字", "大法官解釋", "釋", ):
                     url = "https://cons.judicial.gov.tw/docdata.aspx?fid=100&id=" + \
                         str(int(queryStr[1]) + 310181 + (queryStr[1] == '813') * (14341))
-                    await message.channel.send("<" + url + ">")
 
                     resp = requests.get(url)
                     soup = BeautifulSoup(resp.text, 'html5lib')
 
                     section = soup.find('div', class_='lawList').find_all('li')
-                    respMessage = ''
+                    respMessage = "<" + url + ">\n"
                     flag = 1
                     for i in range(len(section)):
                         # 過濾不想要的章節
@@ -135,7 +129,7 @@ async def on_message(message):
                         else:
                             # 拆分 tag 是 title 還是 text
                             if 'class="title"' in str(section[i]):
-                                respMessage += '----------------------------------------------\n' + section[i].text.strip() + "\n"
+                                respMessage += '-' * 150 + '\n' + section[i].text.strip() + "\n"
                             else:
                                 paragraph = section[i].find('pre')
                                 # 因為解釋文跟理由書的架構為 li > (label -> pre)，我們只要 pre 的部分
@@ -146,10 +140,10 @@ async def on_message(message):
                                     else: respMessage += tmp + "\n"
                                 else:
                                     respMessage += section[i].text.strip() + "\n"
-                    await message.channel.send(respMessage)
+                    respMsgArray = [respMessage[i:i + 2000] for i in range(0, len(respMessage), 2000)]
+                    for i in respMsgArray: await message.channel.send(i)
                 else:
                     respMessage = lawArcFind(queryStr[0], queryStr[1])
-                    if len(respMessage) == 0: respMessage = "抱歉，找不到餒QQ\n"
                     await message.channel.send(respMessage)
                     
             except Exception as e:
