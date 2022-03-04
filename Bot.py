@@ -150,6 +150,7 @@ async def on_message(message):
                 print(e) 
                 await message.channel.send("誒都，閣下的指令格式我解析有點問題誒QQ\n" \
                                          + "可以輸入 !? 以獲得使用說明\n")
+                await message.channel.send("Error: " + str(e))
     if queryStr[:2] == '!!': 
         # Admin mode
         if hash(message.author) == 94570165215:
