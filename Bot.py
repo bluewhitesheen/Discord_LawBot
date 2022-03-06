@@ -8,8 +8,8 @@ lawDict = ast.literal_eval(open("lawDict.txt", "r", encoding='utf-8').read())
 # queryDict is the expand of LawDict, O(n) prepprocess + O(lgN) each query
 queryDict = {}
 # lawCode stands for the default lawCode value (only edited by admin)
-lawCode = "A0030055"
 usage = open("usage.md", mode="r", encoding="utf-8").read()
+lawCode = "A0030055"
 
 
 def lawCodeFind(law: str) -> str:
@@ -69,6 +69,7 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
+    global lawCode
     if message.author == client.user: return
     if len(message.content) == 0: return
 
@@ -78,8 +79,23 @@ async def on_message(message):
     queryStr = queryStr.replace('！', '!').replace('－', '-').replace('？', '?')
     if queryStr[-1] == '條': queryStr = queryStr[:-1]
     if queryStr[-1] == '號': queryStr = queryStr[:-1]
+    print(queryStr)
 
-    if queryStr[0] == '!' and queryStr[1] != '!':
+    if queryStr[:2] == '!!': 
+        global lawCode
+        # Admin mode
+        if hash(message.author) == 94570165215:
+            if queryStr[-1:] == "法": queryStr = queryStr[:-1]
+            if queryStr[-2:] == "條例": queryStr = queryStr[:-2]
+            queryStr = queryStr[2:]
+            queryStr = queryStr.split()
+            if queryStr[0] == 'set': 
+                for key, value in lawDict.items():
+                    if queryStr[1] in key: 
+                        lawCode = value
+                        await message.channel.send('已將指令換成' + key[-1] + "(法/條例)!\n")
+
+    elif queryStr[0] == '!' and queryStr[1] != '!':
         queryStr = queryStr[1:]
         queryStr = queryStr.strip()
         # 將指令拆成中文跟法條
@@ -94,13 +110,12 @@ async def on_message(message):
                 break
         print(queryStr)
         queryStr = queryStr.split()
-
+        
         if len(queryStr) == 1:
             if queryStr[0] == "?": 
                 await message.channel.send("```markdown\n" + usage + "```\n")
             elif queryStr[0].lower() in ("rank", "levels"): pass
-            else: 
-                global lawCode
+            else:  
                 respMessage = lawArcFind(lawCode, queryStr[0])
                 await message.channel.send(respMessage)
 
@@ -129,7 +144,7 @@ async def on_message(message):
                         else:
                             # 拆分 tag 是 title 還是 text
                             if 'class="title"' in str(section[i]):
-                                respMessage += '-' * 150 + '\n' + section[i].text.strip() + "\n"
+                                respMessage += '-' * 46 + '\n' + section[i].text.strip() + "\n"
                             else:
                                 paragraph = section[i].find('pre')
                                 # 因為解釋文跟理由書的架構為 li > (label -> pre)，我們只要 pre 的部分
@@ -151,16 +166,9 @@ async def on_message(message):
                 await message.channel.send("誒都，閣下的指令格式我解析有點問題誒QQ\n" \
                                          + "可以輸入 !? 以獲得使用說明\n")
                 await message.channel.send("Error: " + str(e))
-    if queryStr[:2] == '!!': 
-        # Admin mode
-        if hash(message.author) == 94570165215:
-            queryStr = queryStr[2:]
-            queryStr = queryStr.split()
-            if queryStr[0] == 'set': 
-                for key, value in lawDict.items():
-                    if queryStr[1] in key: 
-                        lawCode = value
-                        await message.channel.send('已將指令換成' + key[-1] + "(法/條例)!\n")
+    elif queryStr[0] == '$':
+        await message.channel.send("哇歐，恭喜你發現了一個新的功能！\n" \
+                                    +"這個符號預計用來尋找判決，敬請期待歐~\n")
 
 # Discord Bot TOKEN
 client.run('OTM0ODQ2MDYxNTA2MzM0NzQy.Ye2BPQ.4FRER46JDoSa9V0iyPF1G4dp2oo')
