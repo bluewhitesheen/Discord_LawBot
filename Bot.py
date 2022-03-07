@@ -1,7 +1,11 @@
 import ast
 import discord
 import requests
+import facebook_crawler
+import time
 from bs4 import BeautifulSoup
+
+
 client = discord.Client()
 
 lawDict = ast.literal_eval(open("lawDict.txt", "r", encoding='utf-8').read())
@@ -11,11 +15,23 @@ queryDict = {}
 usage = open("usage.md", mode="r", encoding="utf-8").read()
 lawCode = "A0030055"
 
+def getNewestPost():  
+    today = time.strftime("%Y-%m-%d") 
+    pageurl= 'https://www.facebook.com/raychu.eclat12'
+    pd = facebook_crawler.Crawl_PagePosts(pageurl=pageurl, until_date=today)
+    result = pd
+    result = result[["TIME", "MESSAGE", "LINK", "POSTID"]].iloc[0]
+    result = list(result)
+    result[2:4] = [result[2] + "/pages/" + result[3]]
+    return result
 
 def lawCodeFind(law: str) -> str:
     url = 'https://law.moj.gov.tw/Law/LawSearchResult.aspx?ty=ONEBAR&kw=' + law + '&sSearch='
     print(url)
-    resp = requests.get(url)
+
+    resp = requests.session()
+    resp.keep_alive = False
+    resp = resp.get(url, headers={'Connection':'close'})
     soup = BeautifulSoup(resp.text, 'html5lib')
     table = soup.find('table')
 
@@ -47,7 +63,7 @@ def lawArcFind(law: str, num: str) -> str:
         print(url)
         resp = requests.session()
         resp.keep_alive = False
-        resp = resp.get(url)
+        resp = resp.get(url, headers={'Connection':'close'})
         soup = BeautifulSoup(resp.text, 'html5lib')
         art = soup.select('div.law-article')[0].select('div')
         respMessage = ""
@@ -79,7 +95,6 @@ async def on_message(message):
     queryStr = queryStr.replace('！', '!').replace('－', '-').replace('？', '?')
     if queryStr[-1] == '條': queryStr = queryStr[:-1]
     if queryStr[-1] == '號': queryStr = queryStr[:-1]
-    print(queryStr)
 
     if queryStr[:2] == '!!': 
         global lawCode
