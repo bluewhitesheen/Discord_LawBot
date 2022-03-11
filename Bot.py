@@ -15,16 +15,6 @@ queryDict = {}
 usage = open("usage.md", mode="r", encoding="utf-8").read()
 lawCode = "A0030055"
 
-def getNewestPost():  
-    today = time.strftime("%Y-%m-%d") 
-    pageurl= 'https://www.facebook.com/raychu.eclat12'
-    pd = facebook_crawler.Crawl_PagePosts(pageurl=pageurl, until_date=today)
-    result = pd
-    result = result[["TIME", "MESSAGE", "LINK", "POSTID"]].iloc[0]
-    result = list(result)
-    result[2:4] = [result[2] + "/pages/" + result[3]]
-    return result
-
 def lawCodeFind(law: str) -> str:
     url = 'https://law.moj.gov.tw/Law/LawSearchResult.aspx?ty=ONEBAR&kw=' + law + '&sSearch='
     print(url)
@@ -89,6 +79,7 @@ async def on_message(message):
     if message.author == client.user: return
     if len(message.content) == 0: return
 
+    print(hash(message.author), message.content)
     # 切割指令
     # 替換字元
     queryStr = message.content
@@ -99,7 +90,7 @@ async def on_message(message):
     if queryStr[:2] == '!!': 
         global lawCode
         # Admin mode
-        if hash(message.author) == 94570165215:
+        if hash(message.author) in (94570165215, ):
             if queryStr[-1:] == "法": queryStr = queryStr[:-1]
             if queryStr[-2:] == "條例": queryStr = queryStr[:-2]
             queryStr = queryStr[2:]
