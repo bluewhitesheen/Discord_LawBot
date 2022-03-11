@@ -90,7 +90,7 @@ async def on_message(message):
     if queryStr[:2] == '!!': 
         global lawCode
         # Admin mode
-        if hash(message.author) in (94570165215, ):
+        if message.author in ("FLAG{$B1uEnWaɪt$}#1860", "RichT#1575", ):
             if queryStr[-1:] == "法": queryStr = queryStr[:-1]
             if queryStr[-2:] == "條例": queryStr = queryStr[:-2]
             queryStr = queryStr[2:]
