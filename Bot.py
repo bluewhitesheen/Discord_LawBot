@@ -95,7 +95,7 @@ async def on_message(message):
             if queryStr[-2:] == "條例": queryStr = queryStr[:-2]
             queryStr = queryStr[2:]
             queryStr = queryStr.split()
-            if queryStr[0] == 'set': 
+            if queryStr[0].lower() == 'set': 
                 for key, value in lawDict.items():
                     if queryStr[1] in key: 
                         lawCode = value
