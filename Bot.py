@@ -79,7 +79,6 @@ async def on_message(message):
     if message.author == client.user: return
     if len(message.content) == 0: return
 
-    print(hash(message.author), message.content)
     # 切割指令
     # 替換字元
     queryStr = message.content
@@ -90,7 +89,7 @@ async def on_message(message):
     if queryStr[:2] == '!!': 
         global lawCode
         # Admin mode
-        if message.author in ("FLAG{$B1uEnWaɪt$}#1860", "RichT#1575", ):
+        if hash(message.author) in (94570165215, 216020961080):
             if queryStr[-1:] == "法": queryStr = queryStr[:-1]
             if queryStr[-2:] == "條例": queryStr = queryStr[:-2]
             queryStr = queryStr[2:]
