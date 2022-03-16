@@ -4,8 +4,9 @@ import requests
 import facebook_crawler
 import time
 from bs4 import BeautifulSoup
+from urllib3.exceptions import InsecureRequestWarning
 
-
+requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 client = discord.Client()
 
 lawDict = ast.literal_eval(open("lawDict.txt", "r", encoding='utf-8').read())
@@ -21,7 +22,7 @@ def lawCodeFind(law: str) -> str:
 
     resp = requests.session()
     resp.keep_alive = False
-    resp = resp.get(url, headers={'Connection':'close'})
+    resp = resp.get(url, headers={'Connection': 'close'},  verify=False)
     soup = BeautifulSoup(resp.text, 'html5lib')
     table = soup.find('table')
 
@@ -53,7 +54,7 @@ def lawArcFind(law: str, num: str) -> str:
         print(url)
         resp = requests.session()
         resp.keep_alive = False
-        resp = resp.get(url, headers={'Connection':'close'})
+        resp = resp.get(url, headers={'Connection': 'close'},  verify=False)
         soup = BeautifulSoup(resp.text, 'html5lib')
         art = soup.select('div.law-article')[0].select('div')
         respMessage = ""
@@ -78,7 +79,7 @@ async def on_message(message):
     global lawCode
     if message.author == client.user: return
     if len(message.content) == 0: return
-    print(hash(message.author), message.author.roles, message.content)
+    print(message.author.id, type(message.author.id), message.author.roles, message.content)
 
     # 切割指令
     # 替換字元
@@ -90,7 +91,7 @@ async def on_message(message):
     if queryStr[:2] == '!!': 
         global lawCode
         # Admin mode
-        if "管理員" in [r.name for r in message.author.roles] :
+        if "管理員" in [r.name for r in message.author.roles] or message.author.id in [396656022241935362, ]:
             if queryStr[-1:] == "法": queryStr = queryStr[:-1]
             if queryStr[-2:] == "條例": queryStr = queryStr[:-2]
             queryStr = queryStr[2:]
@@ -131,7 +132,7 @@ async def on_message(message):
                     url = "https://cons.judicial.gov.tw/docdata.aspx?fid=100&id=" + \
                         str(int(queryStr[1]) + 310181 + (queryStr[1] == '813') * (14341))
 
-                    resp = requests.get(url)
+                    resp = requests.get(url,  verify=False)
                     soup = BeautifulSoup(resp.text, 'html5lib')
 
                     section = soup.find('div', class_='lawList').find_all('li')
