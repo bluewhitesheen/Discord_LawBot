@@ -1,8 +1,6 @@
 import ast
 import discord
 import requests
-import facebook_crawler
-import time
 from bs4 import BeautifulSoup
 from urllib3.exceptions import InsecureRequestWarning
 
@@ -15,6 +13,22 @@ queryDict = {}
 # lawCode stands for the default lawCode value (only edited by admin)
 usage = open("usage.md", mode="r", encoding="utf-8").read()
 lawCode = "A0030055"
+
+def queryStrPreprocess(queryStr: str):
+    queryStr = queryStr.strip()
+    # 將指令拆成中文跟法條
+    for i in range(len(queryStr)):
+        if queryStr[i].isascii():
+            queryStr = queryStr[:i] + ' ' + queryStr[i:]
+            break
+    # 將指令拆成法條跟項號
+    for i in range(len(queryStr)):
+        if queryStr[i].encode('utf-8').isalpha():
+            queryStr = queryStr[:i] + ' ' + queryStr[i:]
+            break
+    print(queryStr)
+    queryStr = queryStr.split()
+    return queryStr
 
 def lawSoup(url: str):
     resp = requests.session()
@@ -40,7 +54,7 @@ def lawCodeFind(law: str) -> str:
                 break
     return pcode
 
-def lawArcFind(law: str, num: str) -> str:
+def lawArcFind(law: str, num: str, mode: int):
     lawOld = law
     if law[-1:] == "法": law = law[:-1]
     if law[-2:] == "條例": law = law[:-2]
@@ -52,17 +66,17 @@ def lawArcFind(law: str, num: str) -> str:
     # 若 url 字串仍然是空的，代表找不到
     # 此時需要將關鍵字丟入全國法規資料庫歐的搜尋，並截取最有關係的法條
     else: 
-        url = "https://law.moj.gov.tw/LawClass/LawSingle.aspx?PCode=" + lawCodeFind(lawOld) + "&flno=" + num    
+        if mode == 0:
+            url = "https://law.moj.gov.tw/LawClass/LawSingle.aspx?PCode=" + lawCodeFind(lawOld) + "&flno=" + num
+    respMessage = ""
     try:
         print(url)
         soup = lawSoup(url)
         art = soup.select('div.law-article')[0].select('div')
-        respMessage = ""
         for i in range(len(art)):
             respMessage += art[i].text + "\n"
-    except Exception as e:
-        print(e)
-        respMessage = "抱歉，找不到餒QQ\n"
+    except IndexError:
+            respMessage = "抱歉，找不到餒QQ\n"
     return respMessage
 
 #調用 event 函式庫
@@ -103,27 +117,13 @@ async def on_message(message):
                         await message.channel.send('已將指令換成' + key[-1] + "(法/條例)!\n")
 
     elif queryStr[0] == '!' and queryStr[1] != '!':
-        queryStr = queryStr[1:]
-        queryStr = queryStr.strip()
-        # 將指令拆成中文跟法條
-        for i in range(len(queryStr)):
-            if queryStr[i].isascii():
-                queryStr = queryStr[:i] + ' ' + queryStr[i:]
-                break
-        # 將指令拆成法條跟項號
-        for i in range(len(queryStr)):
-            if queryStr[i].encode('utf-8').isalpha():
-                queryStr = queryStr[:i] + ' ' + queryStr[i:]
-                break
-        print(queryStr)
-        queryStr = queryStr.split()
-        
+        queryStr = queryStrPreprocess(queryStr[1:])
         if len(queryStr) == 1:
             if queryStr[0] == "?": 
                 await message.channel.send("```markdown\n" + usage + "```\n")
             elif queryStr[0] in ("rank", "levels"): pass
             else:  
-                respMessage = lawArcFind(lawCode, queryStr[0])
+                respMessage = lawArcFind(lawCode, queryStr[0], mode = 0)
                 await message.channel.send(respMessage)
 
         if len(queryStr) >= 2:
@@ -175,6 +175,13 @@ async def on_message(message):
     elif queryStr[0] == '$':
         await message.channel.send("哇歐，恭喜你發現了一個新的功能！\n" \
                                     +"這個符號預計用來尋找判決，敬請期待歐~\n")
+    else: 
+        try:
+            queryStr = queryStrPreprocess(queryStr)
+            respMessage = lawArcFind(queryStr[0], queryStr[1], mode = 1)
+            await message.channel.send(respMessage)
+        except: pass
+
 
 # Discord Bot TOKEN
 client.run('OTM0ODQ2MDYxNTA2MzM0NzQy.Ye2BPQ.4FRER46JDoSa9V0iyPF1G4dp2oo')
