@@ -16,14 +16,18 @@ queryDict = {}
 usage = open("usage.md", mode="r", encoding="utf-8").read()
 lawCode = "A0030055"
 
-def lawCodeFind(law: str) -> str:
-    url = 'https://law.moj.gov.tw/Law/LawSearchResult.aspx?ty=ONEBAR&kw=' + law + '&sSearch='
-    print(url)
-
+def lawSoup(url: str):
     resp = requests.session()
     resp.keep_alive = False
     resp = resp.get(url, headers={'Connection': 'close'},  verify=False)
     soup = BeautifulSoup(resp.text, 'html5lib')
+    return soup
+
+def lawCodeFind(law: str) -> str:
+    url = 'https://law.moj.gov.tw/Law/LawSearchResult.aspx?ty=ONEBAR&kw=' + law + '&sSearch='
+    print(url)
+
+    soup = lawSoup(url)
     table = soup.find('table')
 
     # Extract the link from HTML
@@ -49,13 +53,9 @@ def lawArcFind(law: str, num: str) -> str:
     # 此時需要將關鍵字丟入全國法規資料庫歐的搜尋，並截取最有關係的法條
     else: 
         url = "https://law.moj.gov.tw/LawClass/LawSingle.aspx?PCode=" + lawCodeFind(lawOld) + "&flno=" + num    
-
     try:
         print(url)
-        resp = requests.session()
-        resp.keep_alive = False
-        resp = resp.get(url, headers={'Connection': 'close'},  verify=False)
-        soup = BeautifulSoup(resp.text, 'html5lib')
+        soup = lawSoup(url)
         art = soup.select('div.law-article')[0].select('div')
         respMessage = ""
         for i in range(len(art)):
@@ -121,7 +121,7 @@ async def on_message(message):
         if len(queryStr) == 1:
             if queryStr[0] == "?": 
                 await message.channel.send("```markdown\n" + usage + "```\n")
-            elif queryStr[0].lower() in ("rank", "levels"): pass
+            elif queryStr[0] in ("rank", "levels"): pass
             else:  
                 respMessage = lawArcFind(lawCode, queryStr[0])
                 await message.channel.send(respMessage)
@@ -132,12 +132,11 @@ async def on_message(message):
                     url = "https://cons.judicial.gov.tw/docdata.aspx?fid=100&id=" + \
                         str(int(queryStr[1]) + 310181 + (queryStr[1] == '813') * (14341))
 
-                    resp = requests.get(url,  verify=False)
-                    soup = BeautifulSoup(resp.text, 'html5lib')
-
+                    soup = lawSoup(url)
                     section = soup.find('div', class_='lawList').find_all('li')
                     respMessage = "<" + url + ">\n"
                     flag = 1
+                    
                     for i in range(len(section)):
                         # 過濾不想要的章節
                         if section[i].text in ("解釋公布院令", "解釋更正院令", "理由書"): flag = 0
