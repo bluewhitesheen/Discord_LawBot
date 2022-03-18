@@ -75,8 +75,8 @@ def lawArcFind(law: str, num: str, mode: int):
         art = soup.select('div.law-article')[0].select('div')
         for i in range(len(art)):
             respMessage += art[i].text + "\n"
-    except IndexError:
-            respMessage = "抱歉，找不到餒QQ\n"
+    except:
+            pass
     return respMessage
 
 #調用 event 函式庫
