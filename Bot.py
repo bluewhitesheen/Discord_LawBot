@@ -164,7 +164,7 @@ async def on_message(message):
                     respMsgArray = [respMessage[i:i + 2000] for i in range(0, len(respMessage), 2000)]
                     for i in respMsgArray: await message.channel.send(i)
                 else:
-                    respMessage = lawArcFind(queryStr[0], queryStr[1])
+                    respMessage = lawArcFind(queryStr[0], queryStr[1], mode = 0)
                     await message.channel.send(respMessage)
                     
             except Exception as e:
