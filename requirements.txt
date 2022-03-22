@@ -3,3 +3,4 @@ discord.py==1.7.3
 facebook_crawler==0.0.25
 requests==2.26.0
 html5lib==1.1
+APScheduler==3.9.1
