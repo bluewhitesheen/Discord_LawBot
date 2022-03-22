@@ -1,11 +1,7 @@
-import ast
-import discord
-import requests
-from bs4 import BeautifulSoup
-from discord.ext import commands
-from urllib3.exceptions import InsecureRequestWarning
-import facebook_crawler
 import time
+import discord
+import facebook_crawler
+from discord.ext import tasks
 
 def getNewestPost():  
     today = time.strftime("%Y-%m-%d") 
@@ -18,26 +14,33 @@ def getNewestPost():
     return result
 
 client = discord.Client()
+channel = {}
 
-#調用 event 函式庫
-@client.event
-#當機器人完成啟動時
-async def on_ready():   
-    print('目前登入身份：', client.user)
-    channel = client.get_channel(949311884476186655)
-    messages = await channel.history(limit = 200).flatten()
-    message = [msg for msg in messages if msg.author.id == 955708093818351697][0]
+@tasks.loop(seconds = 20)
+async def sched_job():
+    global channel
+    messages = await channel.history(limit=10).flatten()
+    message = [msg for msg in messages if msg.author.id ==
+               955708093818351697][0]
     # for msg in messages:
     #     print(msg, msg.content)
     getPostMsg = getNewestPost()
     getPostMsg = "雷丘律師有新貼文摟！\n" + "-" * 46 + "\n" \
-                + getPostMsg[1] + "\n" \
-                + getPostMsg[2] + "\n" \
-                + "Timestamp: " + getPostMsg[0]
-    if message != getPostMsg:
-        print(getPostMsg)
-        #await channel.send(getPostMsg)
+        + getPostMsg[1] + "\n" \
+        + getPostMsg[2] + "\n" \
+        + "Timestamp: " + getPostMsg[0]
+    if message.content != getPostMsg:
+        await channel.send(getPostMsg)
 
-# Discord Bot TOKEN
+#調用 event 函式庫
+@client.event
+#當機器人完成啟動時
+async def on_ready(): 
+    print('目前登入身份：', client.user)
+    global channel
+    channel = client.get_channel(949311884476186655)
+    sched_job.start()
+
 client.run('OTU1NzA4MDkzODE4MzUxNjk3.YjlmhQ.E9Vc5Zjedf3ObFF_aSq37McrK3Y')
+
 
