@@ -22,7 +22,7 @@ client = discord.Client()
 #調用 event 函式庫
 @client.event
 #當機器人完成啟動時
-async def on_ready():
+async def on_ready():   
     print('目前登入身份：', client.user)
     channel = client.get_channel(949311884476186655)
     messages = await channel.history(limit = 200).flatten()
