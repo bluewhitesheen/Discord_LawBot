@@ -30,6 +30,17 @@ def queryStrPreprocess(queryStr: str):
     queryStr = queryStr.split()
     return queryStr
 
+def splitMsg(respMessage: str):
+    result = []
+    L = 0
+    print(len(respMessage))
+    while L < len(respMessage) - 1:
+        R = respMessage.rfind('\n', L, L + 2000)
+        result.append(respMessage[L: R+1])
+        L = R
+    return result
+
+
 def lawSoup(url: str):
     resp = requests.session()
     resp.keep_alive = False
@@ -124,7 +135,8 @@ async def on_message(message):
             elif queryStr[0] in ("rank", "levels"): pass
             else:  
                 respMessage = lawArcFind(lawCode, queryStr[0], mode = 0)
-                await message.channel.send(respMessage)
+                respMessage = splitMsg(respMessage)
+                for i in respMessage: await message.channel.send(i)
 
         if len(queryStr) >= 2:
             try:
@@ -161,11 +173,12 @@ async def on_message(message):
                                     else: respMessage += tmp + "\n"
                                 else:
                                     respMessage += section[i].text.strip() + "\n"
-                    respMsgArray = [respMessage[i:i + 2000] for i in range(0, len(respMessage), 2000)]
-                    for i in respMsgArray: await message.channel.send(i)
+                    respMessage = splitMsg(respMessage)
+                    for i in respMessage: await message.channel.send(i)
                 else:
                     respMessage = lawArcFind(queryStr[0], queryStr[1], mode = 0)
-                    await message.channel.send(respMessage)
+                    respMessage = splitMsg(respMessage)
+                    for i in respMessage: await message.channel.send(i)
                     
             except Exception as e:
                 print(e) 
@@ -173,13 +186,15 @@ async def on_message(message):
                                          + "可以輸入 !? 以獲得使用說明\n")
                 await message.channel.send("Error: " + str(e))
     elif queryStr[0] == '$':
+
         await message.channel.send("哇歐，恭喜你發現了一個新的功能！\n" \
                                     +"這個符號預計用來尋找判決，敬請期待歐~\n")
     else: 
         try:
             queryStr = queryStrPreprocess(queryStr)
             respMessage = lawArcFind(queryStr[0], queryStr[1], mode = 1)
-            await message.channel.send(respMessage)
+            respMessage = splitMsg(respMessage)
+            for i in respMessage: await message.channel.send(i)
         except: pass
 
 
