@@ -8,10 +8,10 @@ def getNewestPost():
     today = datetime.datetime.strptime(time.strftime("%Y-%m-%d"), "%Y-%m-%d")
     oneday = datetime.timedelta(days = 1)
     yesterday = today - oneday
-    print(yesterday, type(yesterday))
     yesterday = str(yesterday)
     pageurl= 'https://www.facebook.com/raychu.eclat12'
     pd = facebook_crawler.Crawl_PagePosts(pageurl=pageurl, until_date=yesterday)
+    print(pd)
     result = pd
     result = result[["TIME", "MESSAGE", "LINK", "POSTID"]].iloc[0]
     result = list(result)
