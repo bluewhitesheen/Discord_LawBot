@@ -8,7 +8,6 @@ def getNewestPost():
     today = datetime.datetime.strptime(time.strftime("%Y-%m-%d"), "%Y-%m-%d")
     oneday = datetime.timedelta(days = 1)
     yesterday = today - oneday
-    yesterday = str(yesterday)
     pageurl= 'https://www.facebook.com/raychu.eclat12'
     pd = facebook_crawler.Crawl_PagePosts(pageurl=pageurl, until_date=yesterday)
     print(pd)
@@ -21,7 +20,7 @@ def getNewestPost():
 client = discord.Client()
 channel = {}
 
-@tasks.loop(seconds = 20)
+@tasks.loop(minutes = 2)
 async def sched_job():
     global channel
     messages = await channel.history(limit=10).flatten()
