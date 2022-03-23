@@ -93,7 +93,7 @@ async def on_message(message):
     global lawCode
     if message.author == client.user: return
     if len(message.content) == 0: return
-    print(message.author.id, type(message.author.id), message.author.roles, message.content)
+    print(message.author.id, message.author.roles, message.content)
 
     # 切割指令
     # 替換字元

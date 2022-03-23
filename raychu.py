@@ -1,12 +1,17 @@
 import time
+import datetime
 import discord
 import facebook_crawler
 from discord.ext import tasks
 
 def getNewestPost():  
-    today = time.strftime("%Y-%m-%d") 
+    today = datetime.datetime.strptime(time.strftime("%Y-%m-%d"), "%Y-%m-%d")
+    oneday = datetime.timedelta(days = 1)
+    yesterday = today - oneday
+    print(yesterday, type(yesterday))
+    yesterday = str(yesterday)
     pageurl= 'https://www.facebook.com/raychu.eclat12'
-    pd = facebook_crawler.Crawl_PagePosts(pageurl=pageurl, until_date=today)
+    pd = facebook_crawler.Crawl_PagePosts(pageurl=pageurl, until_date=yesterday)
     result = pd
     result = result[["TIME", "MESSAGE", "LINK", "POSTID"]].iloc[0]
     result = list(result)
