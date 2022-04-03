@@ -1,3 +1,4 @@
+import os
 import ast
 import discord
 import requests
@@ -199,4 +200,4 @@ async def on_message(message):
 
 
 # Discord Bot TOKEN
-client.run('OTM0ODQ2MDYxNTA2MzM0NzQy.Ye2BPQ.4FRER46JDoSa9V0iyPF1G4dp2oo')
+client.run(os.environ['TOKEN_LAWBOT'])
