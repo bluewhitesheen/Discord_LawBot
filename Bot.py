@@ -200,4 +200,8 @@ async def on_message(message):
 
 
 # Discord Bot TOKEN
-client.run(os.environ['TOKEN_LAWBOT'])
+if os.environ['TOKEN_LAWBOT'] != '':
+    client.run(os.environ['TOKEN_LAWBOT'])
+else:
+    token = open('token.txt', 'r', encoding = 'utf-8').split('\n')
+    client.run(token[0])
