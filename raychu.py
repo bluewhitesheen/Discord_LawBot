@@ -52,6 +52,11 @@ async def on_ready():
     channel = client.get_channel(949311884476186655)
     sched_job.start()
 
-client.run("OTU1NzA4MDkzODE4MzUxNjk3.YjlmhQ.-6ybdlUSgT74KMHo6c6GhZXzQmc")
-
+#client.run("OTU1NzA4MDkzODE4MzUxNjk3.YjlmhQ.-6ybdlUSgT74KMHo6c6GhZXzQmc")
+# Discord Bot TOKEN
+if 'TOKEN_RAYCHU' in os.environ:
+    client.run(os.environ['TOKEN_RAYCHU'])
+else:
+    token = open('token.txt', 'r', encoding='utf-8').read().split('\n')
+    client.run(token[1])
 
