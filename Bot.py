@@ -16,20 +16,25 @@ usage = open("usage.md", mode="r", encoding="utf-8").read()
 lawCode = "A0030055"
 
 def queryStrPreprocess(queryStr: str):
-    queryStr = queryStr.strip()
-    # 將指令拆成中文跟法條
-    for i in range(len(queryStr)):
-        if queryStr[i].isascii():
+    queryStr = queryStr.strip().upper()
+    Numlist = [str(i) for i in range(10)] + ['-']
+    Englist = ['I', 'V', 'X', 'L', 'C', 'D', 'M']
+    curtype, tmp, i = -1, 0, 0
+    queryList = []  
+    while i < len(queryStr):
+        if queryStr[i] in Numlist: tmp = 0
+        elif queryStr[i] in Englist: tmp = 1
+        else:  
+            if queryStr[i] !=' ': tmp = 2
+        print(queryStr[i], tmp)
+        if curtype != tmp: 
             queryStr = queryStr[:i] + ' ' + queryStr[i:]
-            break
-    # 將指令拆成法條跟項號
-    for i in range(len(queryStr)):
-        if queryStr[i].encode('utf-8').isalpha():
-            queryStr = queryStr[:i] + ' ' + queryStr[i:]
-            break
-    print(queryStr)
-    queryStr = queryStr.split()
-    return queryStr
+            curtype = tmp
+            i += 1
+        i += 1
+    queryList = queryStr.split()
+    print(queryList)
+    return queryList
 
 def splitMsg(respMessage: str):
     result = []
@@ -110,7 +115,7 @@ async def on_message(message):
     # 切割指令
     # 替換字元
     queryStr = message.content
-    queryStr = queryStr.replace('！', '!').replace('－', '-').replace('？', '?')
+    queryStr = queryStr.replace('！', '!').replace('－', '-').replace('？', '?').replace('§', '')
     if queryStr[-1] == '條': queryStr = queryStr[:-1]
     if queryStr[-1] == '號': queryStr = queryStr[:-1]
 
@@ -187,7 +192,6 @@ async def on_message(message):
                                          + "可以輸入 !? 以獲得使用說明\n")
                 await message.channel.send("Error: " + str(e))
     elif queryStr[0] == '$':
-
         await message.channel.send("哇歐，恭喜你發現了一個新的功能！\n" \
                                     +"這個符號預計用來尋找判決，敬請期待歐~\n")
     else: 
