@@ -41,7 +41,7 @@ async def sched_job():
             await channel.send(getPostMsg)
     except Exception as e:
         curTime = time.strftime("%Y-%m-%d %H:%M:%S")
-        print(curTime, e)
+        print(curTime, e)   
 
 #調用 event 函式庫
 @client.event
