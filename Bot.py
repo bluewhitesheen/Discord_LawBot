@@ -2,6 +2,8 @@ import os
 import ast
 import discord
 import requests
+import roman
+import sys
 from bs4 import BeautifulSoup
 from urllib3.exceptions import InsecureRequestWarning
 
@@ -26,14 +28,16 @@ def queryStrPreprocess(queryStr: str):
         elif queryStr[i] in Englist: tmp = 1
         else:  
             if queryStr[i] !=' ': tmp = 2
-        print(queryStr[i], tmp)
         if curtype != tmp: 
             queryStr = queryStr[:i] + ' ' + queryStr[i:]
             curtype = tmp
             i += 1
         i += 1
     queryList = queryStr.split()
-    print(queryList)
+    # attempt to convert the last substring of queryList from Roman str to int
+    # if fail, pass
+    try: queryList[-1] = roman.fromRoman(queryList[-1])
+    except: pass
     return queryList
 
 def splitMsg(respMessage: str):
@@ -71,29 +75,44 @@ def lawCodeFind(law: str) -> str:
                 break
     return pcode
 
-def lawArcFind(law: str, num: str, mode: int):
-    lawOld = law
-    if law[-1:] == "法": law = law[:-1]
-    if law[-2:] == "條例": law = law[:-2]
+# Due to law "paragraph" lvl finding, changing the parameters "str law, num" to "list queryStr"
+def lawArcFind(queryStr, mode: int):
+    print("queryStr :", queryStr)
+    lawOld = queryStr[0]
+    if queryStr[0][-1:] == "法": queryStr[0] = queryStr[0][:-1]
+    if queryStr[0][-2:] == "條例": queryStr[0] = queryStr[0][:-2]
     url = ""
-    if law.encode().isalnum():
-        url = "https://law.moj.gov.tw/LawClass/LawSingle.aspx?PCode=" + law + "&flno=" + num
-    elif law in queryDict:
-        url = "https://law.moj.gov.tw/LawClass/LawSingle.aspx?PCode=" + queryDict[law] + "&flno=" + num
+    if queryStr[0].encode().isalnum():
+        url = "https://law.moj.gov.tw/LawClass/LawSingle.aspx?PCode=" + queryStr[0] + "&flno=" + queryStr[1]
+    elif queryStr[0] in queryDict:
+        url = "https://law.moj.gov.tw/LawClass/LawSingle.aspx?PCode=" + queryDict[queryStr[0]] + "&flno=" + queryStr[1]
     # 若 url 字串仍然是空的，代表找不到
     # 此時需要將關鍵字丟入全國法規資料庫歐的搜尋，並截取最有關係的法條
     else: 
         if mode == 0:
-            url = "https://law.moj.gov.tw/LawClass/LawSingle.aspx?PCode=" + lawCodeFind(lawOld) + "&flno=" + num
+            url = "https://law.moj.gov.tw/LawClass/LawSingle.aspx?PCode=" + lawCodeFind(lawOld) + "&flno=" + queryStr[1]
     respMessage = ""
     try:
         print(url)
         soup = lawSoup(url)
         art = soup.select('div.law-article')[0].select('div')
-        for i in range(len(art)):
-            respMessage += art[i].text + "\n"
-    except:
-            pass
+        if len(queryStr) == 2:
+            for i in range(len(art)):
+                respMessage += art[i].text + "\n"
+        elif len(queryStr) == 3:
+            arttmp = soup.select('div.law-article')[0].select('div.line-0000')[queryStr[2] - 1]
+            arttmp = art.index(arttmp)
+            while True:
+                respMessage += art[arttmp].text + "\n"
+                arttmp += 1
+                if "line-0000" in str(art[arttmp]): break
+            print(respMessage)
+    except Exception as e:
+        # Exception with line number which occurs error
+        # exc_type, exc_obj, exc_tb = sys.exc_info()
+        # fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+        # print(exc_type, fname, exc_tb.tb_lineno)
+        pass
     return respMessage
 
 #調用 event 函式庫
@@ -110,7 +129,7 @@ async def on_message(message):
     global lawCode
     if message.author == client.user: return
     if len(message.content) == 0: return
-    print(message.author.id, message.author.roles, message.content)
+    #print(message.author.id, message.author.roles, message.content)
 
     # 切割指令
     # 替換字元
@@ -133,19 +152,20 @@ async def on_message(message):
                         lawCode = value
                         await message.channel.send('已將指令換成' + key[-1] + "(法/條例)!\n")
 
-    elif queryStr[0] == '!' and queryStr[1] != '!':
-        queryStr = queryStrPreprocess(queryStr[1:])
-        if len(queryStr) == 1:
-            if queryStr[0] == "?": 
-                await message.channel.send("```markdown\n" + usage + "```\n")
-            elif queryStr[0] in ("rank", "levels"): pass
-            else:  
-                respMessage = lawArcFind(lawCode, queryStr[0], mode = 0)
-                respMessage = splitMsg(respMessage)
-                for i in respMessage: await message.channel.send(i)
+    elif queryStr[0] == '!':
+        try:
+            queryStr = queryStrPreprocess(queryStr[1:])
+            if len(queryStr) == 1:
+                if queryStr[0] == "?": 
+                    await message.channel.send("```markdown\n" + usage + "```\n")
+                elif queryStr[0] in ("rank", "levels"): pass
+                else:  
+                    queryStr = [lawCode] + queryStr
+                    respMessage = lawArcFind(queryStr, mode = 0)
+                    respMessage = splitMsg(respMessage)
+                    for i in respMessage: await message.channel.send(i)
 
-        if len(queryStr) >= 2:
-            try:
+            elif len(queryStr) >= 2:
                 if queryStr[0] in ("釋字", "大法官解釋", "釋", ):
                     url = "https://cons.judicial.gov.tw/docdata.aspx?fid=100&id=" + \
                         str(int(queryStr[1]) + 310181 + (queryStr[1] == '813') * (14341))
@@ -182,22 +202,22 @@ async def on_message(message):
                     respMessage = splitMsg(respMessage)
                     for i in respMessage: await message.channel.send(i)
                 else:
-                    respMessage = lawArcFind(queryStr[0], queryStr[1], mode = 0)
+                    respMessage = lawArcFind(queryStr, mode = 0)
                     respMessage = splitMsg(respMessage)
                     for i in respMessage: await message.channel.send(i)
-                    
-            except Exception as e:
-                print(e) 
-                await message.channel.send("誒都，閣下的指令格式我解析有點問題誒QQ\n" \
-                                         + "可以輸入 !? 以獲得使用說明\n")
-                await message.channel.send("Error: " + str(e))
+        except Exception as e:
+            print(e) 
+            await message.channel.send("誒都，閣下的指令格式我解析有點問題誒QQ\n" \
+                                        + "可以輸入 !? 以獲得使用說明\n")
+            await message.channel.send("Error: " + str(e))
+
     elif queryStr[0] == '$':
         await message.channel.send("哇歐，恭喜你發現了一個新的功能！\n" \
                                     +"這個符號預計用來尋找判決，敬請期待歐~\n")
     else: 
         try:
             queryStr = queryStrPreprocess(queryStr)
-            respMessage = lawArcFind(queryStr[0], queryStr[1], mode = 1)
+            respMessage = lawArcFind(queryStr, mode = 1)
             respMessage = splitMsg(respMessage)
             for i in respMessage: await message.channel.send(i)
         except: pass
