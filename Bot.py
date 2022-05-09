@@ -1,9 +1,4 @@
-import os
-import ast
-import discord
-import requests
-import roman
-import sys
+import re, os, ast, sys, roman, discord, requests
 from bs4 import BeautifulSoup
 from urllib3.exceptions import InsecureRequestWarning
 
@@ -43,7 +38,6 @@ def queryStrPreprocess(queryStr: str):
 def splitMsg(respMessage: str):
     result = []
     L = 0
-    print(len(respMessage))
     while L < len(respMessage) - 1:
         R = respMessage.rfind('\n', L, L + 2000)
         result.append(respMessage[L: R+1])
@@ -76,21 +70,20 @@ def lawCodeFind(law: str) -> str:
     return pcode
 
 # Due to law "paragraph" lvl finding, changing the parameters "str law, num" to "list queryStr"
-def lawArcFind(queryStr, mode: int):
+def lawArcFind(queryStr):
     print("queryStr :", queryStr)
     lawOld = queryStr[0]
     if queryStr[0][-1:] == "法": queryStr[0] = queryStr[0][:-1]
     if queryStr[0][-2:] == "條例": queryStr[0] = queryStr[0][:-2]
-    url = ""
+    url = "https://law.moj.gov.tw/LawClass/LawSingle.aspx?PCode="
     if queryStr[0].encode().isalnum():
-        url = "https://law.moj.gov.tw/LawClass/LawSingle.aspx?PCode=" + queryStr[0] + "&flno=" + queryStr[1]
+        url += queryStr[0] + "&flno=" + queryStr[1]
     elif queryStr[0] in queryDict:
-        url = "https://law.moj.gov.tw/LawClass/LawSingle.aspx?PCode=" + queryDict[queryStr[0]] + "&flno=" + queryStr[1]
-    # 若 url 字串仍然是空的，代表找不到
-    # 此時需要將關鍵字丟入全國法規資料庫歐的搜尋，並截取最有關係的法條
+        url += queryDict[queryStr[0]] + "&flno=" + queryStr[1]
+    # If lawname is not in Lawdict
+    # then find the lawname from law.moj.gov.tw, and capture the most relavant law in the result
     else: 
-        if mode == 0:
-            url = "https://law.moj.gov.tw/LawClass/LawSingle.aspx?PCode=" + lawCodeFind(lawOld) + "&flno=" + queryStr[1]
+        url += lawCodeFind(lawOld) + "&flno=" + queryStr[1]
     respMessage = ""
     try:
         print(url)
@@ -113,6 +106,40 @@ def lawArcFind(queryStr, mode: int):
         # fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
         # print(exc_type, fname, exc_tb.tb_lineno)
         pass
+    return respMessage
+
+def JIArcFind(JInum: int):
+    url = "https://cons.judicial.gov.tw/docdata.aspx?fid=100&id=" + \
+        str(int(JInum) + 310181 + (JInum == '813') * (14341))
+
+    soup = lawSoup(url)
+    section = soup.find('div', class_='lawList').find_all('li')
+    respMessage = "<" + url + ">\n"
+    flag = 1
+    for i in range(len(section)):
+        # 過濾不想要的章節
+        if section[i].text in ("解釋公布院令", "解釋更正院令", "理由書"): flag = 0
+        elif section[i].text in ("解釋字號", "解釋爭點", "解釋文"): flag = 1
+        if section[i].text == "意見書": break
+        if flag == 0: continue
+
+        # 輸出過濾後的部分
+        if len(section[i].find_all('li')) > 0:
+            continue
+        else:
+            # 拆分 tag 是 title 還是 text
+            if 'class="title"' in str(section[i]):
+                respMessage += '-' * 46 + '\n' + section[i].text.strip() + "\n"
+            else:
+                paragraph = section[i].find('pre')
+                # 因為解釋文跟理由書的架構為 li > (label -> pre)，我們只要 pre 的部分
+                # pre 只會有一個，所以直接用 find()
+                if paragraph != None:
+                    tmp = paragraph.text.strip()
+                    if tmp.find('大法官會議主席') != -1: break
+                    else: respMessage += tmp + "\n"
+                else:
+                    respMessage += section[i].text.strip() + "\n"
     return respMessage
 
 #調用 event 函式庫
@@ -161,50 +188,17 @@ async def on_message(message):
                 elif queryStr[0] in ("rank", "levels"): pass
                 else:  
                     queryStr = [lawCode] + queryStr
-                    respMessage = lawArcFind(queryStr, mode = 0)
+                    respMessage = lawArcFind(queryStr)
                     respMessage = splitMsg(respMessage)
                     for i in respMessage: await message.channel.send(i)
 
             elif len(queryStr) >= 2:
                 if queryStr[0] in ("釋字", "大法官解釋", "釋", ):
-                    url = "https://cons.judicial.gov.tw/docdata.aspx?fid=100&id=" + \
-                        str(int(queryStr[1]) + 310181 + (queryStr[1] == '813') * (14341))
-
-                    soup = lawSoup(url)
-                    section = soup.find('div', class_='lawList').find_all('li')
-                    respMessage = "<" + url + ">\n"
-                    flag = 1
-                    
-                    for i in range(len(section)):
-                        # 過濾不想要的章節
-                        if section[i].text in ("解釋公布院令", "解釋更正院令", "理由書"): flag = 0
-                        elif section[i].text in ("解釋字號", "解釋爭點", "解釋文"): flag = 1
-                        if section[i].text == "意見書": break
-                        if flag == 0:  continue
-
-                        # 輸出過濾後的部分
-                        if len(section[i].find_all('li')) > 0:
-                            continue
-                        else:
-                            # 拆分 tag 是 title 還是 text
-                            if 'class="title"' in str(section[i]):
-                                respMessage += '-' * 46 + '\n' + section[i].text.strip() + "\n"
-                            else:
-                                paragraph = section[i].find('pre')
-                                # 因為解釋文跟理由書的架構為 li > (label -> pre)，我們只要 pre 的部分
-                                # pre 只會有一個，所以直接用 find()
-                                if paragraph != None:
-                                    tmp = paragraph.text.strip()
-                                    if tmp.find('大法官會議主席') != -1: break
-                                    else: respMessage += tmp + "\n"
-                                else:
-                                    respMessage += section[i].text.strip() + "\n"
-                    respMessage = splitMsg(respMessage)
-                    for i in respMessage: await message.channel.send(i)
+                    respMessage = JIArcFind(queryStr[1])
                 else:
-                    respMessage = lawArcFind(queryStr, mode = 0)
-                    respMessage = splitMsg(respMessage)
-                    for i in respMessage: await message.channel.send(i)
+                    respMessage = lawArcFind(queryStr)
+                respMessage = splitMsg(respMessage)
+                for i in respMessage: await message.channel.send(i)
         except Exception as e:
             print(e) 
             await message.channel.send("誒都，閣下的指令格式我解析有點問題誒QQ\n" \
@@ -217,7 +211,10 @@ async def on_message(message):
     else: 
         try:
             queryStr = queryStrPreprocess(queryStr)
-            respMessage = lawArcFind(queryStr, mode = 1)
+            if queryStr[0] in ("釋字", "大法官解釋", "釋", ):
+                respMessage = JIArcFind(queryStr[1])
+            else:
+                respMessage = lawArcFind(queryStr)
             respMessage = splitMsg(respMessage)
             for i in respMessage: await message.channel.send(i)
         except: pass
