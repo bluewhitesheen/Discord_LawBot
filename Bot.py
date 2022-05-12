@@ -71,7 +71,6 @@ def lawCodeFind(law: str) -> str:
 
 # Due to law "paragraph" lvl finding, changing the parameters "str law, num" to "list queryStr"
 def lawArcFind(queryStr):
-    print("queryStr :", queryStr)
     lawOld = queryStr[0]
     if queryStr[0][-1:] == "法": queryStr[0] = queryStr[0][:-1]
     if queryStr[0][-2:] == "條例": queryStr[0] = queryStr[0][:-2]
@@ -166,7 +165,6 @@ async def on_message(message):
     if queryStr[-1] == '號': queryStr = queryStr[:-1]
 
     if queryStr[:2] == '!!': 
-        global lawCode
         # Admin mode
         if "管理員" in [r.name for r in message.author.roles] or message.author.id in [396656022241935362, ]:
             if queryStr[-1:] == "法": queryStr = queryStr[:-1]
@@ -182,17 +180,18 @@ async def on_message(message):
     elif queryStr[0] == '!':
         try:
             queryStr = queryStrPreprocess(queryStr[1:])
-            if len(queryStr) == 1:
+            strTypeCnt = list(map(type, queryStr)).count(str)
+            if strTypeCnt == 1:
                 if queryStr[0] == "?": 
                     await message.channel.send("```markdown\n" + usage + "```\n")
                 elif queryStr[0] in ("rank", "levels"): pass
-                else:  
+                else:
                     queryStr = [lawCode] + queryStr
                     respMessage = lawArcFind(queryStr)
                     respMessage = splitMsg(respMessage)
                     for i in respMessage: await message.channel.send(i)
 
-            elif len(queryStr) >= 2:
+            elif strTypeCnt >= 2:
                 if queryStr[0] in ("釋字", "大法官解釋", "釋", ):
                     respMessage = JIArcFind(queryStr[1])
                 else:
