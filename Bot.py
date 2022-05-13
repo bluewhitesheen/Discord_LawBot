@@ -141,9 +141,38 @@ def JIArcFind(JInum: int):
                     respMessage += section[i].text.strip() + "\n"
     return respMessage
 
+# Constitutional Judgement finding function
+def CJfind(queryStr):
+    cjNum = [0, 310024, 309998, 340434, 309908, 309913, 309577]
+    url = 'https://cons.judicial.gov.tw/docdata.aspx?fid=38&id=' + str(cjNum[int(queryStr[2])])
+    soup = lawSoup(url)
+    section = soup.find('div', class_='lawList').find_all('li')
+
+    respMessage = ["<" + url + ">\n"]
+    flag = 0
+
+    for i in range(len(section)):
+        if section[i].text.strip() == '理由':
+            break
+        if section[i].text.strip() == '主文':
+            flag = 1
+        if section[i].text.strip() in ('判決字號', '原分案號', '判決日期', '聲請人', '案由', '主文'):
+            respMessage.append('-' * 46 + '\n')
+        if flag == 0:
+            resstr = section[i].text.strip()
+            if resstr + '\n' not in respMessage:
+                respMessage.append(resstr + '\n')
+        else:
+            for s in section[i].select('label'):
+                s.extract()
+            resstr = section[i].text.strip()
+            respMessage.append(resstr + '\n')
+    
+    respMessage = "".join(respMessage)
+    return respMessage
+
 #調用 event 函式庫
 @client.event
-#當機器人完成啟動時
 async def on_ready():
     print('目前登入身份：', client.user)
     for key, value in lawDict.items():
@@ -205,8 +234,13 @@ async def on_message(message):
             await message.channel.send("Error: " + str(e))
 
     elif queryStr[0] == '$':
-        await message.channel.send("哇歐，恭喜你發現了一個新的功能！\n" \
-                                    +"這個符號預計用來尋找判決，敬請期待歐~\n")
+        queryStr = queryStrPreprocess(queryStr[1:])
+        try:
+            respMessage = CJfind(queryStr)
+            respMessage = splitMsg(respMessage)
+            for i in respMessage: await message.channel.send(i)
+        except Exception as e:
+            print(e)
     else: 
         try:
             queryStr = queryStrPreprocess(queryStr)
