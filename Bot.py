@@ -143,7 +143,13 @@ def JIArcFind(JInum: int):
 
 # Constitutional Judgement finding function
 def CJfind(queryStr):
-    cjNum = [0, 310024, 309998, 340434, 309908, 309913, 309577, 309994, 340546]
+    cjNum = [0] 
+    tmpsoup = lawSoup('https://cons.judicial.gov.tw/judcurrentNew1.aspx?fid=38').find_all('div', class_ = 'judgmentList')[0].find_all('li')[::-1]
+    for i in tmpsoup: 
+        s = str(i).replace("&amp;", '&')[37:43]
+        if s.isdigit():
+            cjNum.append(s)
+    print(cjNum)
     url = 'https://cons.judicial.gov.tw/docdata.aspx?fid=38&id=' + str(cjNum[int(queryStr[2])])
     soup = lawSoup(url)
     section = soup.find('div', class_='lawList').find_all('li')
