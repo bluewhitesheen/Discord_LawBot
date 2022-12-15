@@ -3,7 +3,10 @@ from bs4 import BeautifulSoup
 from urllib3.exceptions import InsecureRequestWarning
 
 requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
-client = discord.Client()
+
+intents = discord.Intents.default()
+intents.message_content = True
+client = discord.Client(intents = intents)
 
 lawDict = ast.literal_eval(open("lawDict.txt", "r", encoding='utf-8').read())
 # queryDict is the expand of LawDict, O(n) prepprocess + O(lgN) each query
@@ -49,7 +52,7 @@ def lawSoup(url: str):
     resp = requests.session()
     resp.keep_alive = False
     resp = resp.get(url, headers={'Connection': 'close'},  verify=False)
-    soup = BeautifulSoup(resp.text, 'html5lib')
+    soup = BeautifulSoup(resp.text, "lxml")
     return soup
 
 def lawCodeFind(law: str) -> str:
