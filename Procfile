@@ -1,3 +1,2 @@
-Bot: python Bot.py
-Clock: python clock.py
+Bot: python LawBot/Bot.py
 Raychu: python raychu.py
