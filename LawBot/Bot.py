@@ -1,4 +1,4 @@
-import re, os, ast, sys, roman, discord, requests
+import os, ast, roman, discord, requests
 from bs4 import BeautifulSoup
 from urllib3.exceptions import InsecureRequestWarning
 
@@ -266,5 +266,7 @@ async def on_message(message):
 if 'TOKEN_LAWBOT' in os.environ:
     client.run(os.environ['TOKEN_LAWBOT'])
 else:
-    token = open('token.txt', 'r', encoding = 'utf-8').read().split('\n')
+    token = open('../token.txt', 'r', encoding = 'utf-8').read().split('\n')
     client.run(token[0])
+
+
