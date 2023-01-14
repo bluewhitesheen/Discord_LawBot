@@ -1,4 +1,4 @@
-import os, ast, roman, discord, requests
+import re, os, ast, roman, discord, requests
 from bs4 import BeautifulSoup
 from urllib3.exceptions import InsecureRequestWarning
 
@@ -102,12 +102,7 @@ def lawArcFind(queryStr):
                 arttmp += 1
                 if "line-0000" in str(art[arttmp]): break
             print(respMessage)
-    except Exception as e:
-        # Exception with line number which occurs error
-        # exc_type, exc_obj, exc_tb = sys.exc_info()
-        # fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-        # print(exc_type, fname, exc_tb.tb_lineno)
-        pass
+    except Exception as e: pass
     return respMessage
 
 def JIArcFind(JInum: int):
@@ -146,14 +141,16 @@ def JIArcFind(JInum: int):
 
 # Constitutional Judgement finding function
 def CJfind(queryStr):
-    cjNum = [0] 
+    cjNum = {} 
     tmpsoup = lawSoup('https://cons.judicial.gov.tw/judcurrentNew1.aspx?fid=38').find_all('div', class_ = 'judgmentList')[0].find_all('li')[::-1]
     for i in tmpsoup: 
-        s = str(i).replace("&amp;", '&')[37:43]
-        if s.isdigit():
-            cjNum.append(s)
-    print(cjNum)
-    url = 'https://cons.judicial.gov.tw/docdata.aspx?fid=38&id=' + str(cjNum[int(queryStr[2])])
+        s = str(i).replace("&amp;", '&')
+        try: 
+            _, id, yr, num = re.findall('\d+', s)
+            cjNum[(yr, num)] = id
+        except: pass
+    # queryStr = ['111', '憲判', '2']
+    url = 'https://cons.judicial.gov.tw/docdata.aspx?fid=38&id=' + str(cjNum[(queryStr[0], queryStr[2])])
     soup = lawSoup(url)
     section = soup.find('div', class_='lawList').find_all('li')
 
