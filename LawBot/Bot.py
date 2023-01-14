@@ -250,16 +250,20 @@ async def on_message(message):
     else: 
         try:
             queryStr = queryStrPreprocess(queryStr)
+            print(queryStr)
             if queryStr[0] in ("釋字", "大法官解釋", "釋", ):
                 respMessage = JIArcFind(queryStr[1])
             else:
-                respMessage = lawArcFind(queryStr)
-            respMessage = splitMsg(respMessage)
-            for i in respMessage: await message.channel.send(i)
+                if queryStr[0] in queryDict:
+                    respMessage = lawArcFind(queryStr)
+            if len(respMessage):
+                respMessage = splitMsg(respMessage)
+                for i in respMessage: await message.channel.send(i)
         except: pass
 
 
 # Discord Bot TOKEN
+
 if 'TOKEN_LAWBOT' in os.environ:
     client.run(os.environ['TOKEN_LAWBOT'])
 else:
