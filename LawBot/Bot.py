@@ -16,26 +16,16 @@ usage = open("usage.md", mode="r", encoding="utf-8").read()
 lawCode = "A0030055"
 
 def queryStrPreprocess(queryStr: str):
-    queryStr = queryStr.strip().upper()
-    Numlist = [str(i) for i in range(10)] + ['-']
-    Englist = ['I', 'V', 'X', 'L', 'C', 'D', 'M']
-    curtype, tmp, i = -1, 0, 0
-    queryList = []  
-    while i < len(queryStr):
-        if queryStr[i] in Numlist: tmp = 0
-        elif queryStr[i] in Englist: tmp = 1
-        else:  
-            if queryStr[i] !=' ': tmp = 2
-        if curtype != tmp: 
-            queryStr = queryStr[:i] + ' ' + queryStr[i:]
-            curtype = tmp
-            i += 1
-        i += 1
-    queryList = queryStr.split()
-    # attempt to convert the last substring of queryList from Roman str to int
-    # if fail, pass
-    try: queryList[-1] = roman.fromRoman(queryList[-1])
+    match_result = re.match('([\u4e00-\u9fff]+)([0-9-]+)([IVX]*)', queryStr, re.I)
+    print(list(match_result.groups()))
+    if type(match_result.groups()) != None: 
+        queryList = list(match_result.groups())
+        if queryList[-1] == '': queryList = queryList[:-1]
+    try: 
+        queryList[-1] = roman.fromRoman(queryList[-1])
     except: pass
+    if queryList[0][-1:] == "法": queryList[0] = queryList[0][:-1]
+    if queryList[0][-2:] == "條例": queryList[0] = queryList[0][:-2]
     return queryList
 
 def splitMsg(respMessage: str):
@@ -73,29 +63,27 @@ def lawCodeFind(law: str) -> str:
     return pcode
 
 # Due to law "paragraph" lvl finding, changing the parameters "str law, num" to "list queryStr"
-def lawArcFind(queryStr):
-    lawOld = queryStr[0]
-    if queryStr[0][-1:] == "法": queryStr[0] = queryStr[0][:-1]
-    if queryStr[0][-2:] == "條例": queryStr[0] = queryStr[0][:-2]
+def lawArcFind(queryList):
+    lawOld = queryList[0]
     url = "https://law.moj.gov.tw/LawClass/LawSingle.aspx?PCode="
-    if queryStr[0].encode().isalnum():
-        url += queryStr[0] + "&flno=" + queryStr[1]
-    elif queryStr[0] in queryDict:
-        url += queryDict[queryStr[0]] + "&flno=" + queryStr[1]
+    if queryList[0].encode().isalnum():
+        url += queryList[0] + "&flno=" + queryList[1]
+    elif queryList[0] in queryDict:
+        url += queryDict[queryList[0]] + "&flno=" + queryList[1]
     # If lawname is not in Lawdict
     # then find the lawname from law.moj.gov.tw, and capture the most relavant law in the result
     else: 
-        url += lawCodeFind(lawOld) + "&flno=" + queryStr[1]
+        url += lawCodeFind(lawOld) + "&flno=" + queryList[1]
     respMessage = ""
     try:
         print(url)
         soup = lawSoup(url)
         art = soup.select('div.law-article')[0].select('div')
-        if len(queryStr) == 2:
+        if len(queryList) == 2:
             for i in range(len(art)):
                 respMessage += art[i].text + "\n"
-        elif len(queryStr) == 3:
-            arttmp = soup.select('div.law-article')[0].select('div.line-0000')[queryStr[2] - 1]
+        elif len(queryList) == 3:
+            arttmp = soup.select('div.law-article')[0].select('div.line-0000')[queryList[2] - 1]
             arttmp = art.index(arttmp)
             while True:
                 respMessage += art[arttmp].text + "\n"
@@ -269,5 +257,4 @@ if 'TOKEN_LAWBOT' in os.environ:
 else:
     token = open('../token.txt', 'r', encoding = 'utf-8').read().split('\n')
     client.run(token[0])
-
 
