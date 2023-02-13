@@ -16,7 +16,7 @@ usage = open("usage.md", mode="r", encoding="utf-8").read()
 lawCode = "A0030055"
 
 def queryStrPreprocess(queryStr: str):
-    match_result = re.match('([\u4e00-\u9fff]+)([0-9-]+)([IVX]*)', queryStr, re.I)
+    match_result = re.match('([\u4e00-\u9fff\\?]*)([0-9-]*)([IVX]*)', queryStr, re.I)
     print(list(match_result.groups()))
     if type(match_result.groups()) != None: 
         queryList = list(match_result.groups())
@@ -203,24 +203,17 @@ async def on_message(message):
     elif queryStr[0] == '!':
         try:
             queryStr = queryStrPreprocess(queryStr[1:])
-            strTypeCnt = list(map(type, queryStr)).count(str)
-            if strTypeCnt == 1:
-                if queryStr[0] == "?": 
-                    await message.channel.send("```markdown\n" + usage + "```\n")
-                elif queryStr[0] in ("rank", "levels"): pass
-                else:
-                    queryStr = [lawCode] + queryStr
-                    respMessage = lawArcFind(queryStr)
-                    respMessage = splitMsg(respMessage)
-                    for i in respMessage: await message.channel.send(i)
-
-            elif strTypeCnt >= 2:
-                if queryStr[0] in ("釋字", "大法官解釋", "釋", ):
-                    respMessage = JIArcFind(queryStr[1])
-                else:
-                    respMessage = lawArcFind(queryStr)
-                respMessage = splitMsg(respMessage)
-                for i in respMessage: await message.channel.send(i)
+            if queryStr[0] == "?": 
+                await message.channel.send("```markdown\n" + usage + "```\n")
+            elif queryStr[0] == "":
+                queryStr[0] = lawCode
+                respMessage = lawArcFind(queryStr)
+            elif queryStr[0] in ("釋字", "大法官解釋", "釋", ):
+                respMessage = JIArcFind(queryStr[1])
+            elif len(queryStr[0]) != 0:
+                respMessage = lawArcFind(queryStr)
+            respMessage = splitMsg(respMessage)
+            for i in respMessage: await message.channel.send(i)
         except Exception as e:
             print(e) 
             await message.channel.send("誒都，閣下的指令格式我解析有點問題誒QQ\n" \
