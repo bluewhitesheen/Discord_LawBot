@@ -17,7 +17,6 @@ lawCode = "A0030055"
 
 def queryStrPreprocess(queryStr: str):
     match_result = re.match('([\u4e00-\u9fff\\?]*)([0-9-]*)([IVX]*)', queryStr, re.I)
-    print(list(match_result.groups()))
     if type(match_result.groups()) != None: 
         queryList = list(match_result.groups())
         if queryList[-1] == '': queryList = queryList[:-1]
@@ -27,6 +26,13 @@ def queryStrPreprocess(queryStr: str):
     if queryList[0][-1:] == "法": queryList[0] = queryList[0][:-1]
     if queryList[0][-2:] == "條例": queryList[0] = queryList[0][:-2]
     return queryList
+
+def JudicalJudgmenetStr(queryStr: str):
+    match_result = re.match('([0-9]+)([\u4e00-\u9fff]+)([0-9]+)', queryStr)
+    if type(match_result.groups()) != None:
+        queryList = list(match_result.groups())
+    return queryList
+
 
 def splitMsg(respMessage: str):
     result = []
@@ -130,7 +136,8 @@ def JIArcFind(JInum: int):
 # Constitutional Judgement finding function
 def CJfind(queryStr):
     cjNum = {} 
-    tmpsoup = lawSoup('https://cons.judicial.gov.tw/judcurrentNew1.aspx?fid=38').find_all('div', class_ = 'judgmentList')[0].find_all('li')[::-1]
+    tmpsoup = lawSoup('https://cons.judicial.gov.tw/judcurrentNew1.aspx?fid=38').find('div', class_ = 'judgmentTabCont').find_all('li')
+    tmpsoup = [i for i in tmpsoup if 'docdata.aspx?' in str(i)]
     for i in tmpsoup: 
         s = str(i).replace("&amp;", '&')
         try: 
@@ -189,11 +196,14 @@ async def on_message(message):
 
     if queryStr[:2] == '!!': 
         # Admin mode
-        if "管理員" in [r.name for r in message.author.roles] or message.author.id in [396656022241935362, ]:
+        roles = [r.name for r in message.author.roles]
+        if "管理員" in roles or "討論活動負責人" in roles or message.author.id in [396656022241935362, ]:
+            queryStr = queryStr.replace("set", "set ")
             if queryStr[-1:] == "法": queryStr = queryStr[:-1]
             if queryStr[-2:] == "條例": queryStr = queryStr[:-2]
             queryStr = queryStr[2:]
             queryStr = queryStr.split()
+            print(queryStr)
             if queryStr[0].lower() == 'set': 
                 for key, value in lawDict.items():
                     if queryStr[1] in key: 
@@ -203,8 +213,9 @@ async def on_message(message):
     elif queryStr[0] == '!':
         try:
             queryStr = queryStrPreprocess(queryStr[1:])
+            respMessage = ""
             if queryStr[0] == "?": 
-                await message.channel.send("```markdown\n" + usage + "```\n")
+                respMessage = "```markdown\n" + usage + "```\n"
             elif queryStr[0] == "":
                 queryStr[0] = lawCode
                 respMessage = lawArcFind(queryStr)
@@ -212,8 +223,9 @@ async def on_message(message):
                 respMessage = JIArcFind(queryStr[1])
             elif len(queryStr[0]) != 0:
                 respMessage = lawArcFind(queryStr)
-            respMessage = splitMsg(respMessage)
-            for i in respMessage: await message.channel.send(i)
+            if len(respMessage):
+                respMessage = splitMsg(respMessage)
+                for i in respMessage: await message.channel.send(i)
         except Exception as e:
             print(e) 
             await message.channel.send("誒都，閣下的指令格式我解析有點問題誒QQ\n" \
@@ -221,7 +233,7 @@ async def on_message(message):
             await message.channel.send("Error: " + str(e))
 
     elif queryStr[0] == '$':
-        queryStr = queryStrPreprocess(queryStr[1:])
+        queryStr = JudicalJudgmenetStr(queryStr[1:])
         try:
             respMessage = CJfind(queryStr)
             respMessage = splitMsg(respMessage)
@@ -231,7 +243,6 @@ async def on_message(message):
     else: 
         try:
             queryStr = queryStrPreprocess(queryStr)
-            print(queryStr)
             if queryStr[0] in ("釋字", "大法官解釋", "釋", ):
                 respMessage = JIArcFind(queryStr[1])
             else:
