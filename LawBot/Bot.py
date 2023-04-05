@@ -5,8 +5,8 @@ from urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
 intents = discord.Intents.default()
-intents.message_content = True
-client = discord.Client(intents = intents)
+intents.messages = True
+client = discord.Client(intents=intents)
 
 lawDict = ast.literal_eval(open("lawDict.txt", "r", encoding='utf-8').read())
 # queryDict is the expand of LawDict, O(n) prepprocess + O(lgN) each query
@@ -16,7 +16,7 @@ usage = open("usage.md", mode="r", encoding="utf-8").read()
 lawCode = "A0030055"
 
 def queryStrPreprocess(queryStr: str):
-    match_result = re.match('([\u4e00-\u9fff\\?]*)([0-9-]*)([IVX]*)', queryStr, re.I)
+    match_result = re.fullmatch('([\u4e00-\u9fff\\?]*)([0-9-]*)([IVX]*)', queryStr, re.I)
     if type(match_result.groups()) != None: 
         queryList = list(match_result.groups())
         if queryList[-1] == '': queryList = queryList[:-1]
