@@ -5,7 +5,7 @@ from urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
 intents = discord.Intents.default()
-intents.messages = True
+intents.message_content = True
 client = discord.Client(intents=intents)
 
 lawDict = ast.literal_eval(open("lawDict.txt", "r", encoding='utf-8').read())
