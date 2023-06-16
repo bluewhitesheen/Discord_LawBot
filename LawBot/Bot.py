@@ -190,6 +190,9 @@ async def on_message(message):
     # 切割指令
     # 替換字元
     queryStr = message.content
+    if queryStr == 'nuguseyo': 
+        await message.channel.send('台\n大\n法\n律\n系\n')
+        return
     queryStr = queryStr.replace('！', '!').replace('－', '-').replace('？', '?').replace('§', '').replace(' ', '')
     if queryStr[-1] == '條': queryStr = queryStr[:-1]
     if queryStr[-1] == '號': queryStr = queryStr[:-1]
