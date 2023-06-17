@@ -70,7 +70,7 @@ def lawCodeFind(law: str) -> str:
 
 # Due to law "paragraph" lvl finding, changing the parameters "str law, num" to "list queryStr"
 def lawArcFind(queryList):
-    lawOld = queryList[0]
+    if queryList[0] == '': queryList[0] = lawCode
     url = "https://law.moj.gov.tw/LawClass/LawSingle.aspx?PCode="
     if queryList[0].encode().isalnum():
         url += queryList[0] + "&flno=" + queryList[1]
@@ -79,7 +79,7 @@ def lawArcFind(queryList):
     # If lawname is not in Lawdict
     # then find the lawname from law.moj.gov.tw, and capture the most relavant law in the result
     else: 
-        url += lawCodeFind(lawOld) + "&flno=" + queryList[1]
+        url += lawCodeFind(queryList[0]) + "&flno=" + queryList[1]
     respMessage = ""
     try:
         print(url)
@@ -153,10 +153,8 @@ def CJfind(queryStr):
     flag = 0
 
     for i in range(len(section)):
-        if section[i].text.strip() == '理由':
-            break
-        if section[i].text.strip() == '主文':
-            flag = 1
+        if section[i].text.strip() == '理由': break
+        if section[i].text.strip() == '主文': flag = 1
         if section[i].text.strip() in ('判決字號', '原分案號', '判決日期', '聲請人', '案由', '主文'):
             respMessage.append('-' * 46 + '\n')
         if flag == 0:
@@ -196,66 +194,42 @@ async def on_message(message):
     queryStr = queryStr.replace('！', '!').replace('－', '-').replace('？', '?').replace('§', '').replace(' ', '')
     if queryStr[-1] == '條': queryStr = queryStr[:-1]
     if queryStr[-1] == '號': queryStr = queryStr[:-1]
-
-    if queryStr[:2] == '!!': 
+    if queryStr.startswith('set'): 
         # Admin mode
         roles = [r.name for r in message.author.roles]
         if "管理員" in roles or "討論活動負責人" in roles or message.author.id in [396656022241935362, ]:
             queryStr = queryStr.replace("set", "set ")
-            if queryStr[-1:] == "法": queryStr = queryStr[:-1]
-            if queryStr[-2:] == "條例": queryStr = queryStr[:-2]
-            queryStr = queryStr[2:]
-            queryStr = queryStr.split()
-            print(queryStr)
-            if queryStr[0].lower() == 'set': 
-                for key, value in lawDict.items():
-                    if queryStr[1] in key: 
-                        lawCode = value
-                        await message.channel.send('已將指令換成' + key[-1] + "(法/條例)!\n")
+            lawName = queryStr.split()[1]
+            if lawName[-1:] == "法": lawName = lawName[:-1]
+            if lawName[-2:] == "條例": lawName = lawName[:-2]
+            if lawName in queryDict:
+                lawCode = queryDict[lawName]
+                await message.channel.send("預設指令變更摟!\n")
 
-    elif queryStr[0] == '!':
-        try:
-            queryStr = queryStrPreprocess(queryStr[1:])
-            respMessage = ""
-            if queryStr[0] == "?": 
-                respMessage = "```markdown\n" + usage + "```\n"
-            elif queryStr[0] == "":
-                queryStr[0] = lawCode
-                respMessage = lawArcFind(queryStr)
-            elif queryStr[0] in ("釋字", "大法官解釋", "釋", ):
-                respMessage = JIArcFind(queryStr[1])
-            elif len(queryStr[0]) != 0:
-                respMessage = lawArcFind(queryStr)
-            if len(respMessage):
-                respMessage = splitMsg(respMessage)
-                for i in respMessage: await message.channel.send(i)
-        except Exception as e:
-            print(e) 
-            await message.channel.send("誒都，閣下的指令格式我解析有點問題誒QQ\n" \
-                                        + "可以輸入 !? 以獲得使用說明\n")
-            await message.channel.send("Error: " + str(e))
-
-    elif queryStr[0] == '$':
-        queryStr = JudicalJudgmenetStr(queryStr[1:])
-        try:
-            respMessage = CJfind(queryStr)
+    else: 
+        flag, respMessage = 0, ""
+        if queryStr[0] == '$':
+            queryStr = JudicalJudgmenetStr(queryStr[1:])
+            try: respMessage = CJfind(queryStr)
+            except: pass
+        else:
+            if queryStr[0] == '!':
+                flag = 1
+                queryStr = queryStr[1:]
+            queryStr = queryStrPreprocess(queryStr)
+            try:
+                respMessage = ""
+                if queryStr[0] == "?": 
+                    respMessage = "```markdown\n" + usage + "```\n"
+                elif queryStr[0] in ("釋字", "大法官解釋", "釋", ):
+                    respMessage = JIArcFind(queryStr[1])
+                elif flag or queryStr[0] in queryDict:
+                    respMessage = lawArcFind(queryStr)
+            except:
+                await message.channel.send("誒都，閣下的指令格式我解析有點問題誒QQ\n" + "可以輸入 !? 以獲得使用說明\n") 
+        if len(respMessage): 
             respMessage = splitMsg(respMessage)
             for i in respMessage: await message.channel.send(i)
-        except Exception as e:
-            print(e)
-    else: 
-        try:
-            queryStr = queryStrPreprocess(queryStr)
-            if queryStr[0] in ("釋字", "大法官解釋", "釋", ):
-                respMessage = JIArcFind(queryStr[1])
-            else:
-                if queryStr[0] in queryDict:
-                    respMessage = lawArcFind(queryStr)
-            if len(respMessage):
-                respMessage = splitMsg(respMessage)
-                for i in respMessage: await message.channel.send(i)
-        except: pass
-
 
 # Discord Bot TOKEN
 
