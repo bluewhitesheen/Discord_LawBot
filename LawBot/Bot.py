@@ -16,20 +16,23 @@ usage = open("usage.md", mode="r", encoding="utf-8").read()
 lawCode = "A0030055"
 
 def queryStrPreprocess(queryStr: str):
+    queryList = []
     match_result = re.fullmatch('([\u4e00-\u9fff\\?]*)([0-9-]*)([IVX]*)', queryStr, re.I)
-    if type(match_result.groups()) != None: 
+    if match_result: 
         queryList = list(match_result.groups())
         if queryList[-1] == '': queryList = queryList[:-1]
     try: 
         queryList[-1] = roman.fromRoman(queryList[-1])
     except: pass
+    if len(queryList) == 0: return queryList
     if queryList[0][-1:] == "法": queryList[0] = queryList[0][:-1]
     if queryList[0][-2:] == "條例": queryList[0] = queryList[0][:-2]
     return queryList
 
 def JudicalJudgmenetStr(queryStr: str):
+    queryList = []
     match_result = re.match('([0-9]+)([\u4e00-\u9fff]+)([0-9]+)', queryStr)
-    if type(match_result.groups()) != None:
+    if match_result:
         queryList = list(match_result.groups())
     return queryList
 
@@ -37,6 +40,7 @@ def JudicalJudgmenetStr(queryStr: str):
 def splitMsg(respMessage: str):
     result = []
     L = 0
+    if len(respMessage) < 2000: return [respMessage]
     while L < len(respMessage) - 1:
         R = respMessage.rfind('\n', L, L + 2000)
         result.append(respMessage[L: R+1])
@@ -72,14 +76,21 @@ def lawCodeFind(law: str) -> str:
 def lawArcFind(queryList):
     if queryList[0] == '': queryList[0] = lawCode
     url = "https://law.moj.gov.tw/LawClass/LawSingle.aspx?PCode="
-    if queryList[0].encode().isalnum():
-        url += queryList[0] + "&flno=" + queryList[1]
+    if queryList[0].encode().isalnum(): pass
     elif queryList[0] in queryDict:
-        url += queryDict[queryList[0]] + "&flno=" + queryList[1]
+        queryList[0] = queryDict[queryList[0]]
     # If lawname is not in Lawdict
     # then find the lawname from law.moj.gov.tw, and capture the most relavant law in the result
     else: 
-        url += lawCodeFind(queryList[0]) + "&flno=" + queryList[1]
+        queryList[0] = lawCodeFind(queryList[0])
+    
+    if int(queryList[1]) == 0:
+        loc = url.find('/LawSingle.aspx?')
+        url = url[:loc] + '/LawAll.aspx?pcode=' + queryList[0]
+        return url
+    else:
+        url += queryList[0] + "&flno=" + queryList[1]
+        
     respMessage = ""
     try:
         print(url)
@@ -95,8 +106,7 @@ def lawArcFind(queryList):
                 respMessage += art[arttmp].text + "\n"
                 arttmp += 1
                 if "line-0000" in str(art[arttmp]): break
-            print(respMessage)
-    except Exception as e: pass
+    except: pass
     return respMessage
 
 def JIArcFind(JInum: int):
@@ -217,6 +227,7 @@ async def on_message(message):
                 flag = 1
                 queryStr = queryStr[1:]
             queryStr = queryStrPreprocess(queryStr)
+            if queryStr == []: return 
             try:
                 respMessage = ""
                 if queryStr[0] == "?": 
