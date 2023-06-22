@@ -58,7 +58,6 @@ def lawSoup(url: str):
 def lawCodeFind(law: str) -> str:
     url = 'https://law.moj.gov.tw/Law/LawSearchResult.aspx?ty=ONEBAR&kw=' + law + '&sSearch='
     print(url)
-
     soup = lawSoup(url)
     table = soup.find('table')
 
@@ -84,13 +83,16 @@ def lawArcFind(queryList):
     else: 
         queryList[0] = lawCodeFind(queryList[0])
     
-    if int(queryList[1]) == 0:
+    print(queryList)
+
+    if queryList[1].isnumeric() and int(queryList[1]) == 0:
+        print('enter general mode')
         loc = url.find('/LawSingle.aspx?')
         url = url[:loc] + '/LawAll.aspx?pcode=' + queryList[0]
         return url
     else:
         url += queryList[0] + "&flno=" + queryList[1]
-        
+
     respMessage = ""
     try:
         print(url)
