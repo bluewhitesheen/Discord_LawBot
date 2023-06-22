@@ -86,7 +86,6 @@ def lawArcFind(queryList):
     print(queryList)
 
     if queryList[1].isnumeric() and int(queryList[1]) == 0:
-        print('enter general mode')
         loc = url.find('/LawSingle.aspx?')
         url = url[:loc] + '/LawAll.aspx?pcode=' + queryList[0]
         return url
@@ -200,7 +199,7 @@ async def on_message(message):
     # 切割指令
     # 替換字元
     queryStr = message.content
-    if queryStr == 'nuguseyo': 
+    if len(queryStr) > 3 and queryStr in 'nuguseyo': 
         await message.channel.send('台\n大\n法\n律\n系\n')
         return
     queryStr = queryStr.replace('！', '!').replace('－', '-').replace('？', '?').replace('§', '').replace(' ', '')
