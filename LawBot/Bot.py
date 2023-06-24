@@ -196,8 +196,6 @@ async def on_message(message):
     if len(message.content) == 0: return
     #print(message.author.id, message.author.roles, message.content)
 
-    # 切割指令
-    # 替換字元
     queryStr = message.content
     if len(queryStr) > 3 and queryStr in 'nuguseyo': 
         await message.channel.send('台\n大\n法\n律\n系\n')
@@ -237,8 +235,9 @@ async def on_message(message):
                     respMessage = JIArcFind(queryStr[1])
                 elif flag or queryStr[0] in queryDict:
                     respMessage = lawArcFind(queryStr)
-            except:
+            except Exception as e:
                 await message.channel.send("誒都，閣下的指令格式我解析有點問題誒QQ\n" + "可以輸入 !? 以獲得使用說明\n") 
+                print(e)
         if len(respMessage): 
             respMessage = splitMsg(respMessage)
             for i in respMessage: await message.channel.send(i)
