@@ -63,15 +63,21 @@ def lawCodeFind(law: str) -> str:
 
     # Extract the link from HTML
     # ref: https://stackoverflow.com/questions/65042243/adding-href-to-panda-read-html-df
-    result = [link for link in table.find_all('td')]
-    for i in range(len(result)):
-        if i % 2 == 1:
-            if 'label-fei' not in str(result[i]):
-                pcode = result[i].find('a').get('href')[28:36]
-                break
-    return pcode
+    try:
+        result = [link for link in table.find_all('td')][1::2]
+        result_pair = []
+        for i in range(len(result)):
+            tmptag = result[i].find('a')
+            tmpcode = tmptag.get('href')[28:36]
+            tmpname = tmptag.text
+            result_pair.append((tmpname, tmpcode))
+        result_pair = sorted(result_pair, key = lambda p: len(p[0]))
+        print(result_pair)
+        pcode = result_pair[0][1]
+        return pcode
+    except: 
+        return 'Z9999999'
 
-# Due to law "paragraph" lvl finding, changing the parameters "str law, num" to "list queryStr"
 def lawArcFind(queryList):
     if queryList[0] == '': queryList[0] = lawCode
     url = "https://law.moj.gov.tw/LawClass/LawSingle.aspx?PCode="
@@ -82,8 +88,9 @@ def lawArcFind(queryList):
     # then find the lawname from law.moj.gov.tw, and capture the most relavant law in the result
     else: 
         queryList[0] = lawCodeFind(queryList[0])
-    
-    print(queryList)
+        if queryList[0] == 'Z9999999': 
+            return 'Z9999999'
+            
 
     if queryList[1].isnumeric() and int(queryList[1]) == 0:
         loc = url.find('/LawSingle.aspx?')
@@ -226,7 +233,8 @@ async def on_message(message):
                 flag = 1
                 queryStr = queryStr[1:]
             queryStr = queryStrPreprocess(queryStr)
-            if queryStr == []: return 
+            if queryStr == [] or queryStr[1] == '': return 
+            print(queryStr)
             try:
                 respMessage = ""
                 if queryStr[0] == "?": 
@@ -238,9 +246,13 @@ async def on_message(message):
             except Exception as e:
                 await message.channel.send("誒都，閣下的指令格式我解析有點問題誒QQ\n" + "可以輸入 !? 以獲得使用說明\n") 
                 print(e)
+        if  respMessage == 'Z9999999':
+            await message.channel.send('誒都，找不到閣下的法條誒QQ\n搜尋冷門法條時，建議不要打法條簡稱喔！\n')
+            return
         if len(respMessage): 
             respMessage = splitMsg(respMessage)
             for i in respMessage: await message.channel.send(i)
+        
 
 # Discord Bot TOKEN
 
