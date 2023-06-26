@@ -118,37 +118,9 @@ def lawArcFind(queryList):
     return respMessage
 
 def JIArcFind(JInum: int):
-    url = "https://cons.judicial.gov.tw/docdata.aspx?fid=100&id=" + \
-        str(int(JInum) + 310181 + (JInum == '813') * (14341))
-
-    soup = lawSoup(url)
-    section = soup.find('div', class_='lawList').find_all('li')
-    respMessage = "<" + url + ">\n"
-    flag = 1
-    for i in range(len(section)):
-        # 過濾不想要的章節
-        if section[i].text in ("解釋公布院令", "解釋更正院令", "理由書"): flag = 0
-        elif section[i].text in ("解釋字號", "解釋爭點", "解釋文"): flag = 1
-        if section[i].text == "意見書": break
-        if flag == 0: continue
-
-        # 輸出過濾後的部分
-        if len(section[i].find_all('li')) > 0:
-            continue
-        else:
-            # 拆分 tag 是 title 還是 text
-            if 'class="title"' in str(section[i]):
-                respMessage += '-' * 46 + '\n' + section[i].text.strip() + "\n"
-            else:
-                paragraph = section[i].find('pre')
-                # 因為解釋文跟理由書的架構為 li > (label -> pre)，我們只要 pre 的部分
-                # pre 只會有一個，所以直接用 find()
-                if paragraph != None:
-                    tmp = paragraph.text.strip()
-                    if tmp.find('大法官會議主席') != -1: break
-                    else: respMessage += tmp + "\n"
-                else:
-                    respMessage += section[i].text.strip() + "\n"
+    f = open("JIArc/" + str(JInum) + ".txt", mode="r", encoding="utf-8")
+    respMessage = f.read()
+    f.close()
     return respMessage
 
 # Constitutional Judgement finding function
