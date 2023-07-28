@@ -8,7 +8,7 @@ intents = discord.Intents.default()
 intents.message_content = True
 client = discord.Client(intents=intents)
 
-lawDict = ast.literal_eval(open("lawDict.txt", "r", encoding='utf-8').read())
+lawDict = ast.literal_eval(open("./lawDict.txt", "r", encoding='utf-8').read())
 # queryDict is the expand of LawDict, O(n) prepprocess + O(lgN) each query
 queryDict = {}
 # lawCode stands for the default lawCode value (only edited by admin)
