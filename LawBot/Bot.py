@@ -121,7 +121,8 @@ def lawArcFind(queryList):
     return respMessage
 
 def JIArcFind(JInum: int):
-    f = open("JIArc/" + str(JInum) + ".txt", mode="r", encoding="utf-8")
+    fDir = os.path.join(BASE_DIR, "JIArc", str(JInum) + ".txt")
+    f = open(fDir, mode="r", encoding="utf-8")
     respMessage = f.read()
     f.close()
     return respMessage
