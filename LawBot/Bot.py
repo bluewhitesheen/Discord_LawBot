@@ -11,10 +11,11 @@ client = discord.Client(intents=intents)
 BASE_DIR=os.path.dirname(os.path.abspath(__file__))
 lawDictDir = os.path.join(BASE_DIR, "lawDict.txt")
 lawDict = ast.literal_eval(open(lawDictDir, "r", encoding='utf-8').read())
-# queryDict is the expand of LawDict, O(n) prepprocess + O(lgN) each query
-queryDict = {}
-# lawCode stands for the default lawCode value (only edited by admin)
+usageDir = os.path.join(BASE_DIR, "usage.md")
 usage = open("usage.md", mode="r", encoding="utf-8").read()
+
+queryDict = {}
+# lawCode stands for the default lawCode value
 lawCode = "A0030055"
 
 def queryStrPreprocess(queryStr: str):
