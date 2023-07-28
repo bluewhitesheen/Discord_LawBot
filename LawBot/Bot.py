@@ -12,7 +12,7 @@ BASE_DIR=os.path.dirname(os.path.abspath(__file__))
 lawDictDir = os.path.join(BASE_DIR, "lawDict.txt")
 lawDict = ast.literal_eval(open(lawDictDir, "r", encoding='utf-8').read())
 usageDir = os.path.join(BASE_DIR, "usage.md")
-usage = open("usage.md", mode="r", encoding="utf-8").read()
+usage = open(usageDir, mode="r", encoding="utf-8").read()
 
 queryDict = {}
 # lawCode stands for the default lawCode value
