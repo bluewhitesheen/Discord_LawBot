@@ -59,7 +59,7 @@ def lawSoup(url: str):
     return soup
 
 def lawCodeFind(law: str) -> str:
-    url = 'https://law.moj.gov.tw/Law/LawSearchResult.aspx?ty=ONEBAR&kw=' + law + '&sSearch='
+    url = 'https://law.moj.gov.tw/Law/LawSearchResult.aspx?cur=Ln&ty=ONEBAR&kw=' + law + '&psize=60'
     print(url)
     soup = lawSoup(url)
     table = soup.find('table')
