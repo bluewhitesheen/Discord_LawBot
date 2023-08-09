@@ -8,7 +8,7 @@ intents = discord.Intents.default()
 intents.message_content = True
 client = discord.Client(intents=intents)
 
-BASE_DIR=os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 lawDictDir = os.path.join(BASE_DIR, "lawDict.txt")
 lawDict = ast.literal_eval(open(lawDictDir, "r", encoding='utf-8').read())
 usageDir = os.path.join(BASE_DIR, "usage.md")
@@ -106,17 +106,27 @@ def lawArcFind(queryList):
     try:
         print(url)
         soup = lawSoup(url)
+        temp, ttemp = [], ""
         art = soup.select('div.law-article')[0].select('div')
+        art = [str(i).replace(" show-number", "").replace("</div>","").replace('<div class="line-0000">', '0') for i in art]
+        art = [re.sub(r'<div class="line-\d+">', '', i) for i in art]
+        art.append('0')
+        for i in art:
+            if i[0] == '0':
+                temp.append(ttemp)
+                ttemp = i[1:] + '\n'
+            else:
+                ttemp += i + '\n'
+        art = temp[1:]
+        if len(art) > 1:
+            temp = [roman.toRoman(i + 1) + ' ' + art[i] for i in range(len(art))]
+            art = temp
+        
         if len(queryList) == 2:
             for i in range(len(art)):
-                respMessage += art[i].text + "\n"
+                respMessage = "\n".join(art)
         elif len(queryList) == 3:
-            arttmp = soup.select('div.law-article')[0].select('div.line-0000')[queryList[2] - 1]
-            arttmp = art.index(arttmp)
-            while True:
-                respMessage += art[arttmp].text + "\n"
-                arttmp += 1
-                if "line-0000" in str(art[arttmp]): break
+            respMessage = art[int(queryList[2]) - 1]
     except: pass
     return respMessage
 
