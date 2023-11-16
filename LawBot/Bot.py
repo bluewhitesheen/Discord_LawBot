@@ -18,6 +18,13 @@ queryDict = {}
 # lawCode stands for the default lawCode value
 lawCode = "A0030055"
 
+def regulationNameReplacing(s: str):
+    for i in ["條例", "通則", "規則", "細則", "辦法", "綱要", "準則", "規程", "標準", "法", "律", ]:
+        if s.endswith(i): 
+            s = s[:-len(i)]
+            break 
+    return s
+
 def queryStrPreprocess(queryStr: str):
     queryList = []
     match_result = re.fullmatch('([\u4e00-\u9fff\\?]*)([0-9-]*)([IVX]*)', queryStr, re.I)
@@ -29,7 +36,9 @@ def queryStrPreprocess(queryStr: str):
     except: pass
     if len(queryList) == 0: return queryList
     if queryList[0][-1:] == "法": queryList[0] = queryList[0][:-1]
-    if queryList[0][-2:] == "條例": queryList[0] = queryList[0][:-2]
+    if queryList[0][-2:] == "條例": queryList[0] = queryList[0][:-2]    
+    queryList[0] = regulationNameReplacing(queryList[0])
+    print(queryList)
     return queryList
 
 def JudicalJudgmenetStr(queryStr: str):
@@ -190,10 +199,7 @@ async def on_message(message):
     #print(message.author.id, message.author.roles, message.content)
 
     queryStr = message.content
-    if len(queryStr) > 3 and queryStr in 'nuguseyo': 
-        await message.channel.send('台\n大\n法\n律\n系\n')
-        return
-    queryStr = queryStr.replace('！', '!').replace('－', '-').replace('？', '?').replace('§', '').replace(' ', '')
+    queryStr = queryStr.replace('！', '!').replace('－', '-').replace('？', '?').replace('§', '').replace(' ', '').replace('第', '')
     if queryStr[-1] == '條': queryStr = queryStr[:-1]
     if queryStr[-1] == '號': queryStr = queryStr[:-1]
     if queryStr.startswith('set'): 
@@ -202,8 +208,7 @@ async def on_message(message):
         if "管理員" in roles or "討論活動負責人" in roles or message.author.id in [396656022241935362, ]:
             queryStr = queryStr.replace("set", "set ")
             lawName = queryStr.split()[1]
-            if lawName[-1:] == "法": lawName = lawName[:-1]
-            if lawName[-2:] == "條例": lawName = lawName[:-2]
+            lawName = regulationNameReplacing(lawName[0])
             if lawName in queryDict:
                 lawCode = queryDict[lawName]
                 await message.channel.send("預設指令變更摟!\n")
@@ -245,6 +250,6 @@ async def on_message(message):
 if 'TOKEN_LAWBOT' in os.environ:
     client.run(os.environ['TOKEN_LAWBOT'])
 else:
-    token = open('../token.txt', 'r', encoding = 'utf-8').read().split('\n')
+    token = open(BASE_DIR + '/../token.txt', 'r', encoding = 'utf-8').read().split('\n')
     client.run(token[0])
 
