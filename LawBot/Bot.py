@@ -36,10 +36,7 @@ def queryStrPreprocess(queryStr: str):
         queryList[-1] = roman.fromRoman(queryList[-1])
     except: pass
     if len(queryList) == 0: return queryList
-    if queryList[0][-1:] == "法": queryList[0] = queryList[0][:-1]
-    if queryList[0][-2:] == "條例": queryList[0] = queryList[0][:-2]    
     queryList[0] = regulationNameReplacing(queryList[0])
-    print(queryList)
     return queryList
 
 def JudicalJudgmenetStr(queryStr: str):
