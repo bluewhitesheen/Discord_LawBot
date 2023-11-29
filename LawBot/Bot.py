@@ -163,7 +163,7 @@ def CJfind(queryStr):
     res = requests.get(url)
     par = Selector(text=res.text)
     lawList = par.css('.lawList')
-    newLawList, respMessage = [], ["<" + url + ">\n", ]
+    respMessage =["<" + url + ">", ]
     pureNumber = re.compile('^\d*$')
     for item in lawList:
         text = item.xpath('.//text()').getall()
@@ -171,17 +171,13 @@ def CJfind(queryStr):
             t = t.strip()
             if len(t) == 0 or pureNumber.match(t) is not None:
                 continue
-            newLawList.append(t)
+            elif t == '理由':
+                break
+            elif t in ('判決字號', '原分案號', '判決日期', '聲請人', '案由', '主文'):
+                 respMessage.append('-' * 46 )
+            respMessage.append(t)
 
-    lawList = newLawList
-    for i in range(len(lawList)):
-        if lawList[i] == '理由': break
-        if lawList[i] in ('判決字號', '原分案號', '判決日期', '聲請人', '案由', '主文'):
-            respMessage.append('-' * 46 + '\n')
-        respMessage.append(lawList[i] + '\n')
-    
-    respMessage = "".join(respMessage)
-    return respMessage
+    return "\n".join(respMessage)
 
 #調用 event 函式庫
 @client.event
