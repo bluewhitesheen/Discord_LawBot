@@ -1,5 +1,6 @@
 import re, os, ast, roman, discord, requests
 from bs4 import BeautifulSoup
+from parsel import Selector
 from urllib3.exceptions import InsecureRequestWarning
 
 requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
@@ -159,26 +160,25 @@ def CJfind(queryStr):
         except: pass
     # queryStr = ['111', '憲判', '2']
     url = 'https://cons.judicial.gov.tw/docdata.aspx?fid=38&id=' + str(cjNum[(queryStr[0], queryStr[2])])
-    soup = lawSoup(url)
-    section = soup.find('div', class_='lawList').find_all('li')
+    res = requests.get(url)
+    par = Selector(text=res.text)
+    lawList = par.css('.lawList')
+    newLawList, respMessage = [], ["<" + url + ">\n", ]
+    pureNumber = re.compile('^\d*$')
+    for item in lawList:
+        text = item.xpath('.//text()').getall()
+        for t in text:
+            t = t.strip()
+            if len(t) == 0 or pureNumber.match(t) is not None:
+                continue
+            newLawList.append(t)
 
-    respMessage = ["<" + url + ">\n"]
-    flag = 0
-
-    for i in range(len(section)):
-        if section[i].text.strip() == '理由': break
-        if section[i].text.strip() == '主文': flag = 1
-        if section[i].text.strip() in ('判決字號', '原分案號', '判決日期', '聲請人', '案由', '主文'):
+    lawList = newLawList
+    for i in range(len(lawList)):
+        if lawList[i] == '理由': break
+        if lawList[i] in ('判決字號', '原分案號', '判決日期', '聲請人', '案由', '主文'):
             respMessage.append('-' * 46 + '\n')
-        if flag == 0:
-            resstr = section[i].text.strip()
-            if resstr + '\n' not in respMessage:
-                respMessage.append(resstr + '\n')
-        else:
-            for s in section[i].select('label'):
-                s.extract()
-            resstr = section[i].text.strip()
-            respMessage.append(resstr + '\n')
+        respMessage.append(lawList[i] + '\n')
     
     respMessage = "".join(respMessage)
     return respMessage
