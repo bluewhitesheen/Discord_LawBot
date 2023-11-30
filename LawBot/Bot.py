@@ -58,10 +58,14 @@ def splitMsg(respMessage: str):
     return result
 
 
-def lawSoup(url: str):
+def requestsGet(url: str):
     resp = requests.session()
     resp.keep_alive = False
     resp = resp.get(url, headers={'Connection': 'close'},  verify=False)
+    return resp
+
+def lawSoup(url: str):
+    resp = requestsGet(url)
     soup = BeautifulSoup(resp.text, "lxml")
     return soup
 
