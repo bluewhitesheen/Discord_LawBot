@@ -36,10 +36,7 @@ def queryStrPreprocess(queryStr: str):
         queryList[-1] = roman.fromRoman(queryList[-1])
     except: pass
     if len(queryList) == 0: return queryList
-    if queryList[0][-1:] == "法": queryList[0] = queryList[0][:-1]
-    if queryList[0][-2:] == "條例": queryList[0] = queryList[0][:-2]    
     queryList[0] = regulationNameReplacing(queryList[0])
-    print(queryList)
     return queryList
 
 def JudicalJudgmenetStr(queryStr: str):
@@ -61,10 +58,14 @@ def splitMsg(respMessage: str):
     return result
 
 
-def lawSoup(url: str):
+def requestsGet(url: str):
     resp = requests.session()
     resp.keep_alive = False
     resp = resp.get(url, headers={'Connection': 'close'},  verify=False)
+    return resp
+
+def lawSoup(url: str):
+    resp = requestsGet(url)
     soup = BeautifulSoup(resp.text, "lxml")
     return soup
 
@@ -163,7 +164,7 @@ def CJfind(queryStr):
     res = requests.get(url)
     par = Selector(text=res.text)
     lawList = par.css('.lawList')
-    newLawList, respMessage = [], ["<" + url + ">\n", ]
+    respMessage =["<" + url + ">", ]
     pureNumber = re.compile('^\d*$')
     for item in lawList:
         text = item.xpath('.//text()').getall()
@@ -171,17 +172,13 @@ def CJfind(queryStr):
             t = t.strip()
             if len(t) == 0 or pureNumber.match(t) is not None:
                 continue
-            newLawList.append(t)
+            elif t == '理由':
+                break
+            elif t in ('判決字號', '原分案號', '判決日期', '聲請人', '案由', '主文'):
+                 respMessage.append('-' * 46 )
+            respMessage.append(t)
 
-    lawList = newLawList
-    for i in range(len(lawList)):
-        if lawList[i] == '理由': break
-        if lawList[i] in ('判決字號', '原分案號', '判決日期', '聲請人', '案由', '主文'):
-            respMessage.append('-' * 46 + '\n')
-        respMessage.append(lawList[i] + '\n')
-    
-    respMessage = "".join(respMessage)
-    return respMessage
+    return "\n".join(respMessage)
 
 #調用 event 函式庫
 @client.event
@@ -199,7 +196,7 @@ async def on_message(message):
     #print(message.author.id, message.author.roles, message.content)
 
     queryStr = message.content
-    queryStr = queryStr.replace('！', '!').replace('－', '-').replace('？', '?').replace('§', '').replace(' ', '').replace('第', '')
+    queryStr = queryStr.replace('！', '!').replace('－', '-').replace('？', '?').replace('＄', '$').replace('§', '').replace(' ', '').replace('第', '')
     if queryStr[-1] == '條': queryStr = queryStr[:-1]
     if queryStr[-1] == '號': queryStr = queryStr[:-1]
     if queryStr.startswith('set'): 
