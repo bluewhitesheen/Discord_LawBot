@@ -12,15 +12,25 @@ client = discord.Client(intents=intents)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 lawDictDir = os.path.join(BASE_DIR, "lawDict.txt")
 lawDict = ast.literal_eval(open(lawDictDir, "r", encoding='utf-8').read())
+lawNameDict = open(os.path.join(BASE_DIR, "lawName.txt"), "r", encoding='utf-8').readlines()
+lawNameDict = {i.split()[0]: i.split()[1] for i in lawNameDict}
 usageDir = os.path.join(BASE_DIR, "usage.md")
 usage = open(usageDir, mode="r", encoding="utf-8").read()
 
 queryDict = {}
 # lawCode stands for the default lawCode value
 lawCode = "A0030055"
+lawNamePostfix = ["規則", "細則", "辦法", "綱要", "準則", "規程", "標準", "條例", "通則", "法", "律"]
+
+def lawNameMatching(s0: str, s1: str):
+    currentLocation = 0
+    for ch in s0:
+        currentLocation = s1.find(ch, currentLocation)
+        if currentLocation == -1: return False
+    return True
 
 def regulationNameReplacing(s: str):
-    for i in ["條例", "通則", "規則", "細則", "辦法", "綱要", "準則", "規程", "標準", "法", "律", ]:
+    for i in lawNamePostfix:
         if s.endswith(i): 
             s = s[:-len(i)]
             break 
@@ -46,7 +56,6 @@ def JudicalJudgmenetStr(queryStr: str):
         queryList = list(match_result.groups())
     return queryList
 
-
 def splitMsg(respMessage: str):
     result = []
     L = 0
@@ -56,7 +65,6 @@ def splitMsg(respMessage: str):
         result.append(respMessage[L: R+1])
         L = R
     return result
-
 
 def requestsGet(url: str):
     resp = requests.session()
@@ -70,28 +78,30 @@ def lawSoup(url: str):
     return soup
 
 def lawCodeFind(law: str) -> str:
-    url = 'https://law.moj.gov.tw/Law/LawSearchResult.aspx?cur=Ln&ty=ONEBAR&kw=' + law + '&psize=60'
-    print(url)
-    soup = lawSoup(url)
-    table = soup.find('table')
-
-    # Extract the link from HTML
-    # ref: https://stackoverflow.com/questions/65042243/adding-href-to-panda-read-html-df
-    try:
-        result = [link for link in table.find_all('td')][1::2]
-        result_pair = []
-        for i in range(len(result)):
-            tmptag = result[i].find('a')
-            tmpcode = tmptag.get('href')[28:36]
-            tmpname = tmptag.text
-            result_pair.append((tmpname, tmpcode))
-        result_pair = sorted(result_pair, key = lambda p: len(p[0]))
-        print(result_pair)
-        pcode = result_pair[0][1]
-        return pcode
-    except: 
-        return 'Z9999999'
-
+    candidateLawName = []
+    for i in lawNameDict:
+        if lawNameMatching(law, i): candidateLawName.append(i)
+    if len(candidateLawName) == 0: 
+        table = lawSoup('https://law.moj.gov.tw/Law/LawSearchResult.aspx?cur=Ln&ty=ONEBAR&kw=' + law + '&psize=60').find('table')
+        try:
+            result = [link for link in table.find_all('td')][1::2]
+            result_pair = []
+            for i in range(len(result)):
+                tmptag = result[i].find('a')
+                tmpcode = tmptag.get('href')[28:36]
+                tmpname = tmptag.text
+                result_pair.append((tmpname, tmpcode))
+            result_pair = sorted(result_pair, key = lambda p: len(p[0]))
+            print(result_pair)
+            pcode = result_pair[0][1]
+            return pcode
+        except: 
+            return 'Z9999999'
+    elif len(candidateLawName) == 1: return lawNameDict[candidateLawName[0]]
+    else:
+        candidateLawName = sorted(candidateLawName, key = lambda x: len(x))
+        return lawNameDict[candidateLawName[0]] 
+    
 def lawArcFind(queryList):
     if queryList[0] == '': queryList[0] = lawCode
     url = "https://law.moj.gov.tw/LawClass/LawSingle.aspx?PCode="
@@ -102,9 +112,7 @@ def lawArcFind(queryList):
     # then find the lawname from law.moj.gov.tw, and capture the most relavant law in the result
     else: 
         queryList[0] = lawCodeFind(queryList[0])
-        if queryList[0] == 'Z9999999': 
-            return 'Z9999999'
-            
+        if queryList[0] == 'Z9999999': return 'Z9999999'
 
     if queryList[1].isnumeric() and int(queryList[1]) == 0:
         loc = url.find('/LawSingle.aspx?')
