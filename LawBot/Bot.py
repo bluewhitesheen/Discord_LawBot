@@ -122,7 +122,6 @@ def lawArcFind(queryList):
         url += queryList[0] + "&flno=" + queryList[1]
 
     respMessage = ""
-    print(queryList)
     try:
         print(url)
         soup = lawSoup(url)
