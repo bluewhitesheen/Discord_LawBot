@@ -216,7 +216,7 @@ async def on_message(message):
             lawName = regulationNameReplacing(lawName)
             if lawName in queryDict:
                 lawCode = queryDict[lawName]
-                await message.channel.send("預設指令變更摟!\n")
+                await message.channel.send("預設法規變更摟!\n")
 
     else: 
         flag, respMessage = 0, ""
