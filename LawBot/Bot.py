@@ -204,7 +204,7 @@ async def on_message(message):
     #print(message.author.id, message.author.roles, message.content)
 
     queryStr = message.content
-    queryStr = queryStr.replace('！', '!').replace('－', '-').replace('？', '?').replace('＄', '$').replace('§', '').replace(' ', '').replace('第', '')
+    queryStr = queryStr.replace('！', '!').replace('－', '-').replace('？', '?').replace('＄', '$').replace('§', '').replace(' ', '').replace('第', '').replace('之', '-')
     if queryStr[-1] == '條': queryStr = queryStr[:-1]
     if queryStr[-1] == '號': queryStr = queryStr[:-1]
     if queryStr.startswith('set'): 
