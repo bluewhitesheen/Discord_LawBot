@@ -213,10 +213,10 @@ async def on_message(message):
         if "管理員" in roles or "討論活動負責人" in roles or message.author.id in [396656022241935362, ]:
             queryStr = queryStr.replace("set", "set ")
             lawName = queryStr.split()[1]
-            lawName = regulationNameReplacing(lawName[0])
+            lawName = regulationNameReplacing(lawName)
             if lawName in queryDict:
                 lawCode = queryDict[lawName]
-                await message.channel.send("預設指令變更摟!\n")
+                await message.channel.send("預設法規變更摟!\n")
 
     else: 
         flag, respMessage = 0, ""
