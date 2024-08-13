@@ -172,7 +172,7 @@ def CJfind(queryStr):
     par = Selector(text=res.text)
     lawList = par.css('.lawList')
     respMessage =["<" + url + ">", ]
-    pureNumber = re.compile('^\d*$')
+    pureNumber = re.compile(r'^\d*$')
     for item in lawList:
         text = item.xpath('.//text()').getall()
         for t in text:
