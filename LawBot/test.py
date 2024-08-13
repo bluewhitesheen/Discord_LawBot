@@ -162,98 +162,35 @@ def CJfind(queryStr):
     tmpsoup = lawSoup('https://cons.judicial.gov.tw/judcurrentNew1.aspx?fid=38').find('div', class_ = 'judgmentTabCont').find_all('li')
     cjList = [item for item in tmpsoup if len(item.text) > 9]
     for item in cjList:
+        print(len(item.text), item.text, item)
         year, num = re.findall(r'\d+', item.text)
         id = re.search(r'\d{6}', str(item)).group()
         cjNum[(year, num)] = id
-
-    # queryStr = ['111', '憲判', '2']
-    url = 'https://cons.judicial.gov.tw/docdata.aspx?fid=38&id=' + str(cjNum[(queryStr[0], queryStr[2])])
-    res = requests.get(url)
-    par = Selector(text=res.text)
-    lawList = par.css('.lawList')
-    respMessage =["<" + url + ">", ]
-    pureNumber = re.compile('^\d*$')
-    for item in lawList:
-        text = item.xpath('.//text()').getall()
-        for t in text:
-            t = t.strip()
-            if len(t) == 0 or pureNumber.match(t) is not None:
-                continue
-            elif t == '理由':
-                break
-            elif t in ('判決字號', '原分案號', '判決日期', '聲請人', '案由', '主文'):
-                 respMessage.append('-' * 46 )
-            respMessage.append(t)
-
-    return "\n".join(respMessage)
-
-#調用 event 函式庫
-@client.event
-async def on_ready():
-    print('目前登入身份：', client.user)
-    for key, value in lawDict.items():
-        for i in key: queryDict[i] = value
+    for i in cjNum:
+        print(i, cjNum[i])
     
 
-@client.event
-async def on_message(message):
-    global lawCode
-    if message.author == client.user: return
-    if len(message.content) == 0: return
-    #print(message.author.id, message.author.roles, message.content)
 
-    queryStr = message.content
-    queryStr = queryStr.replace('！', '!').replace('－', '-').replace('？', '?').replace('＄', '$').replace('§', '').replace(' ', '').replace('第', '').replace('之', '-')
-    if queryStr[-1] == '條': queryStr = queryStr[:-1]
-    if queryStr[-1] == '號': queryStr = queryStr[:-1]
-    if queryStr.startswith('set'): 
-        # Admin mode
-        roles = [r.name for r in message.author.roles]
-        if "管理員" in roles or "討論活動負責人" in roles or message.author.id in [396656022241935362, ]:
-            queryStr = queryStr.replace("set", "set ")
-            lawName = queryStr.split()[1]
-            lawName = regulationNameReplacing(lawName)
-            if lawName in queryDict:
-                lawCode = queryDict[lawName]
-                await message.channel.send("預設法規變更摟!\n")
+    # url = 'https://cons.judicial.gov.tw/docdata.aspx?fid=38&id=' + str(cjNum[(queryStr[0], queryStr[2])])
+    # res = requests.get(url)
+    # par = Selector(text=res.text)
+    # lawList = par.css('.lawList')
+    # respMessage =["<" + url + ">", ]
+    # pureNumber = re.compile('^\d*$')
+    # for item in lawList:
+    #     text = item.xpath('.//text()').getall()
+    #     for t in text:
+    #         t = t.strip()
+    #         if len(t) == 0 or pureNumber.match(t) is not None:
+    #             continue
+    #         elif t == '理由':
+    #             break
+    #         elif t in ('判決字號', '原分案號', '判決日期', '聲請人', '案由', '主文'):
+    #              respMessage.append('-' * 46 )
+    #         respMessage.append(t)
 
-    else: 
-        flag, respMessage = 0, ""
-        if queryStr[0] == '$':
-            queryStr = JudicalJudgmenetStr(queryStr[1:])
-            try: respMessage = CJfind(queryStr)
-            except: pass
-        else:
-            if queryStr[0] == '!':
-                flag = 1
-                queryStr = queryStr[1:]
-            queryStr = queryStrPreprocess(queryStr)
-            if queryStr == [] or queryStr[1] == '': return 
-            print(queryStr)
-            try:
-                respMessage = ""
-                if queryStr[0] == "?": 
-                    respMessage = "```markdown\n" + usage + "```\n"
-                elif queryStr[0] in ("釋字", "大法官解釋", "釋", ):
-                    respMessage = JIArcFind(queryStr[1])
-                elif flag or queryStr[0] in queryDict:
-                    respMessage = lawArcFind(queryStr)
-            except Exception as e:
-                await message.channel.send("誒都，閣下的指令格式我解析有點問題誒QQ\n" + "可以輸入 !? 以獲得使用說明\n") 
-                print(e)
-        if  respMessage == 'Z9999999':
-            await message.channel.send('誒都，找不到閣下的法條誒QQ\n搜尋冷門法條時，建議不要打法條簡稱喔！\n')
-            return
-        if len(respMessage): 
-            respMessage = splitMsg(respMessage)
-            for i in respMessage: await message.channel.send(i)
-        
+    # return "\n".join(respMessage)
+    return "test"
 
-# Discord Bot TOKEN
-
-if 'TOKEN_LAWBOT' in os.environ:
-    client.run(os.environ['TOKEN_LAWBOT'])
-else:
-    token = open(BASE_DIR + '/../token.txt', 'r', encoding = 'utf-8').read().split('\n')
-    client.run(token[0])
-
+# main function
+CJfind(['112', '憲判', '2'])
