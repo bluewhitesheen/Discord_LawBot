@@ -1,7 +1,7 @@
 # Bot.py
 
-import os, ast, discord
-from utils import lawNameMatching, regulationNameReplacing, queryStrPreprocess, splitMsg, requestsGet, lawSoup  # 引入 utils 中的函數
+import os, ast, discord, roman, re
+from utils import lawNameMatching, regulationNameReplacing, queryStrPreprocess, splitMsg, lawSoup
 
 intents = discord.Intents.default()
 intents.message_content = True
