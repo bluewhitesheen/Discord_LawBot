@@ -9,13 +9,10 @@ intents = discord.Intents.default()
 intents.message_content = True
 client = discord.Client(intents=intents)
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-lawDictDir = os.path.join(BASE_DIR, "lawDict.txt")
-lawDict = ast.literal_eval(open(lawDictDir, "r", encoding='utf-8').read())
-lawNameDict = open(os.path.join(BASE_DIR, "lawName.txt"), "r", encoding='utf-8').readlines()
+BASE_DIR = os.path.abspath(os.path.join(__file__, '..', '..'))
+lawDict = ast.literal_eval(open(os.path.join(BASE_DIR, "res/lawDict.txt"), "r", encoding='utf-8').read())
+lawNameDict = open(os.path.join(BASE_DIR, "res/lawName.txt"), "r", encoding='utf-8').readlines()
 lawNameDict = {i.split()[0]: i.split()[1] for i in lawNameDict}
-usageDir = os.path.join(BASE_DIR, "usage.md")
-usage = open(usageDir, mode="r", encoding="utf-8").read()
 
 queryDict = {}
 # lawCode stands for the default lawCode value
@@ -103,7 +100,7 @@ def lawArcFind(queryList):
     return respMessage
 
 def JIArcFind(JInum: int):
-    fDir = os.path.join(BASE_DIR, "JIArc", str(JInum) + ".txt")
+    fDir = os.path.join(BASE_DIR, "res/JIArc", str(JInum) + ".txt")
     f = open(fDir, mode="r", encoding="utf-8")
     respMessage = f.read()
     f.close()
