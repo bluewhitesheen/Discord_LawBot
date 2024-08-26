@@ -1,6 +1,7 @@
 # Bot.py
 
 from parsel import Selector
+from dotenv import load_dotenv
 import os, ast, discord, re, requests, roman
 from utils import lawNameMatching, regulationNameReplacing, queryStrPreprocess, splitMsg, lawSoup
 
@@ -204,9 +205,8 @@ async def on_message(message):
 
 # Discord Bot TOKEN
 
-if 'TOKEN_LAWBOT' in os.environ:
-    client.run(os.environ['TOKEN_LAWBOT'])
-else:
-    token = open(BASE_DIR + '/../token.txt', 'r', encoding = 'utf-8').read().split('\n')
-    client.run(token[0])
+load_dotenv()
+
+token = os.getenv("DISCORD_TOKEN")
+client.run(token)
 
