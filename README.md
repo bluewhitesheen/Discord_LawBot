@@ -1,5 +1,10 @@
 ## 版本更迭
 
+### version 2.9
+* 將程式放在 Docker image 上
+* 將法條機器人程式碼整理進 src, res 兩個資料夾
+* 建立憲法判決 fetch 功能，並與 Docker Volume 一併使用
+
 ### version 2.8.2
 * 更改 ! + 法規名稱之演算法，支援以常見簡稱搜尋不在 lawDict.txt 的法條
 
