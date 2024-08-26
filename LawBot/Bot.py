@@ -1,6 +1,7 @@
 # Bot.py
 
-import os, ast, discord, roman, re
+from parsel import Selector
+import os, ast, discord, re, requests, roman
 from utils import lawNameMatching, regulationNameReplacing, queryStrPreprocess, splitMsg, lawSoup
 
 intents = discord.Intents.default()
@@ -20,6 +21,13 @@ queryDict = {}
 lawCode = "A0030055"
 lawNamePostfix = ["規則", "細則", "辦法", "綱要", "準則", "規程", "標準", "條例", "通則", "法", "律"]
 
+
+def JudicalJudgmenetStr(queryStr: str):
+    queryList = []
+    match_result = re.match('([0-9]+)([\u4e00-\u9fff]+)([0-9]+)', queryStr)
+    if match_result:
+        queryList = list(match_result.groups())
+    return queryList
 
 def lawCodeFind(law: str) -> str:
     candidateLawName = []
@@ -102,6 +110,7 @@ def JIArcFind(JInum: int):
 
 # Constitutional Judgement finding function
 def CJfind(queryStr):
+    print(queryStr)
     cjNum = {} 
     tmpsoup = lawSoup('https://cons.judicial.gov.tw/judcurrentNew1.aspx?fid=38').find('div', class_ = 'judgmentTabCont').find_all('li')
     cjList = [item for item in tmpsoup if len(item.text) > 9]
