@@ -11,4 +11,4 @@ COPY . /app
 RUN pip install --no-cache-dir -r requirements.txt
 
 # 啟動 Discord 機器人
-CMD ["python", "LawBot/src/Bot.py"]
+CMD ["python", "-u", "LawBot/src/Bot.py"]
