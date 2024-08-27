@@ -52,3 +52,5 @@ if __name__ == "__main__":
     CJArc = os.path.join(BASE_DIR, "res/CJArc")
     fetch_and_save_cj(cjNum, CJArc)
     print("Finished fetching: " + str(cjNum))
+
+    # cjNum = {('113', '7'): '346206'}

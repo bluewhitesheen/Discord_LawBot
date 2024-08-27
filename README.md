@@ -1,5 +1,9 @@
 ## 版本更迭
 
+### version 2.9.1
+* 多了 notification.py，現在每 30 分鐘就會去看一次憲法法庭官網，看有沒有新判決出現，如果有就通知大家
+* 寫了一個 main.py，開兩個 threads 去啟動 bot.py 跟 notification.py
+
 ### version 2.9
 * 將程式放在 Docker image 上
 * 將法條機器人程式碼整理進 src, res 兩個資料夾
