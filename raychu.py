@@ -4,6 +4,7 @@ import datetime
 import discord
 import facebook_crawler
 from discord.ext import tasks
+from dotenv import load_dotenv
 
 def getNewestPost():  
     today = datetime.datetime.strptime(time.strftime("%Y-%m-%d"), "%Y-%m-%d")
@@ -53,9 +54,8 @@ async def on_ready():
     sched_job.start()
 
 # Discord Bot TOKEN
-if 'TOKEN_RAYCHU' in os.environ:
-    client.run(os.environ['TOKEN_RAYCHU'])
-else:
-    token = open('token.txt', 'r', encoding='utf-8').read().split('\n')
-    client.run(token[1])
+load_dotenv()
+token = os.getenv("RAYCHU_TOKEN")
+
+client.run(token)
 

@@ -187,5 +187,6 @@ async def on_message(message):
 # Discord Bot TOKEN
 load_dotenv()
 token = os.getenv("DISCORD_TOKEN")
+
 client.run(token)
 

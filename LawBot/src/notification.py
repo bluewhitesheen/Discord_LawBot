@@ -30,4 +30,5 @@ async def on_ready():
 # Discord Bot TOKEN
 load_dotenv()
 token = os.getenv("DISCORD_TOKEN")
+
 client.run(token)
