@@ -1,5 +1,27 @@
 {
   "name": "discord-law-bot",
   "description": "中華民國首家 discord 法律機器人",
-  "keywords": ["python", "discord", "law", "bot"]
+  "keywords": ["python", "discord", "law", "bot"],
+  "stack": "heroku-22",
+  "buildpacks": [
+    {
+      "url": "heroku/python"
+    }
+  ],
+  "env": {
+    "TOKEN": {
+      "description": "Discord Bot Token",
+      "required": true
+    },
+    "PYTHON_VERSION": {
+      "description": "Python version",
+      "value": "3.11.0"
+    }
+  },
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "eco"
+    }
+  }
 }

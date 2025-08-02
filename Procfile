@@ -1,2 +1,1 @@
-Bot: python LawBot/Bot.py
-Raychu: python raychu.py
+web: python -u LawBot/src/main.py
