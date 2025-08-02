@@ -5,7 +5,8 @@ def run_bot():
     os.system('python LawBot/src/bot.py')
 
 def run_notification():
-    os.system('python LawBot/src/notification.py')
+    # os.system('python LawBot/src/notification.py')
+    pass
 
 # 創建兩個線程
 bot_thread = threading.Thread(target=run_bot)
