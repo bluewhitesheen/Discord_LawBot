@@ -1,1 +1,1 @@
-web: python -u LawBot/src/main.py
+worker: python -u LawBot/src/main.py
