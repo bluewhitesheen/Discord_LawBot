@@ -6,30 +6,42 @@ import os, ast, discord, re, requests, roman
 from utils import lawNameMatching, regulationNameReplacing, queryStrPreprocess, splitMsg, lawSoup
 from fetch import fetch_cj_numbers, fetch_and_save_cj
 
-
 intents = discord.Intents.default()
 intents.message_content = True
 client = discord.Client(intents=intents)
 
-BASE_DIR = os.path.abspath(os.path.join(__file__, '..', '..'))
-lawDict = ast.literal_eval(open(os.path.join(BASE_DIR, "res/lawDict.txt"), "r", encoding='utf-8').read())
-lawNameDict = open(os.path.join(BASE_DIR, "res/lawName.txt"), "r", encoding='utf-8').readlines()
-lawNameDict = {i.split()[0]: i.split()[1] for i in lawNameDict}
+def load_law_resources(base_dir: str):
+    with open(os.path.join(base_dir, "res/lawDict.txt"), "r", encoding='utf-8') as f:
+        law_dict = ast.literal_eval(f.read())
 
-queryDict = {}
-# lawCode stands for the default lawCode value
-lawCode = "A0030055"
+    with open(os.path.join(base_dir, "res/lawName.txt"), "r", encoding='utf-8') as f:
+        law_name_lines = f.readlines()
+    law_name_dict = {line.split()[0]: line.split()[1] for line in law_name_lines}
+
+    query_dict = {}
+    for aliases, law_code in law_dict.items():
+        for alias in aliases:
+            query_dict[alias] = law_code
+
+    return law_dict, law_name_dict, query_dict
+
+
+BASE_DIR = os.path.abspath(os.path.join(__file__, '..', '..'))
+lawDict, lawNameDict, queryDict = load_law_resources(BASE_DIR)
+
+# default_law_code stands for the default law code value for https://https://law.moj.gov.tw/LawClass/LawSingle.aspx?PCode= when the user input only article number without law name.
+default_law_code = "A0030055"
 lawNamePostfix = ["規則", "細則", "辦法", "綱要", "準則", "規程", "標準", "條例", "通則", "法", "律"]
 
 
-def JudicalJudgmenetStr(queryStr: str):
+def parse_judicial_judgment_query(queryStr: str):
     queryList = []
     match_result = re.match('([0-9]+)([\u4e00-\u9fff]+)([0-9]+)', queryStr)
     if match_result:
         queryList = list(match_result.groups())
     return queryList
 
-def lawCodeFind(law: str) -> str:
+def find_law_code(law: str) -> str:
     candidateLawName = []
     for i in lawNameDict:
         if lawNameMatching(law, i): candidateLawName.append(i)
@@ -54,8 +66,8 @@ def lawCodeFind(law: str) -> str:
         candidateLawName = sorted(candidateLawName, key = lambda x: len(x))
         return lawNameDict[candidateLawName[0]] 
     
-def lawArcFind(queryList):
-    if queryList[0] == '': queryList[0] = lawCode
+def find_law_article(queryList):
+    if queryList[0] == '': queryList[0] = default_law_code
     url = "https://law.moj.gov.tw/LawClass/LawSingle.aspx?PCode="
     if queryList[0].encode().isalnum(): pass
     elif queryList[0] in queryDict:
@@ -63,7 +75,7 @@ def lawArcFind(queryList):
     # If lawname is not in Lawdict
     # then find the lawname from law.moj.gov.tw, and capture the most relavant law in the result
     else: 
-        queryList[0] = lawCodeFind(queryList[0])
+        queryList[0] = find_law_code(queryList[0])
         if queryList[0] == 'Z9999999': return 'Z9999999'
 
     if queryList[1].isnumeric() and int(queryList[1]) == 0:
@@ -101,7 +113,7 @@ def lawArcFind(queryList):
     except: pass
     return respMessage
 
-def JIArcFind(JInum: int):
+def find_judicial_interpretation_text(JInum: int):
     fDir = os.path.join(BASE_DIR, "res/JIArc", str(JInum) + ".txt")
     f = open(fDir, mode="r", encoding="utf-8")
     respMessage = f.read()
@@ -109,7 +121,7 @@ def JIArcFind(JInum: int):
     return respMessage
 
 # Constitutional Judgement finding function
-def CJfind(queryStr):
+def find_constitutional_judgement(queryStr):
     queryNum = queryStr[0] + queryStr[2].zfill(2)
     fDir = os.path.join(BASE_DIR, "res/CJArc", str(queryNum) + ".txt")
     if os.path.exists(fDir):
@@ -120,19 +132,17 @@ def CJfind(queryStr):
         cjNum = fetch_cj_numbers()
         CJArc = os.path.join(BASE_DIR, "res/CJArc")
         fetch_and_save_cj(cjNum, CJArc)
-        return CJfind(queryStr)
+        return find_constitutional_judgement(queryStr)
     
 #調用 event 函式庫
 @client.event
 async def on_ready():
     print('目前登入身份：', client.user)
-    for key, value in lawDict.items():
-        for i in key: queryDict[i] = value
     
 
 @client.event
 async def on_message(message):
-    global lawCode
+    global default_law_code
     if message.author == client.user: return
     if len(message.content) == 0: return
     #print(message.author.id, message.author.roles, message.content)
@@ -149,14 +159,14 @@ async def on_message(message):
             lawName = queryStr.split()[1]
             lawName = regulationNameReplacing(lawName)
             if lawName in queryDict:
-                lawCode = queryDict[lawName]
+                default_law_code = queryDict[lawName]
                 await message.channel.send("預設法規變更摟!\n")
 
     else: 
         flag, respMessage = 0, ""
         if queryStr[0] == '$':
-            queryStr = JudicalJudgmenetStr(queryStr[1:])
-            try: respMessage = CJfind(queryStr)
+            queryStr = parse_judicial_judgment_query(queryStr[1:])
+            try: respMessage = find_constitutional_judgement(queryStr)
             except: pass
         else:
             if queryStr[0] == '!':
@@ -170,9 +180,9 @@ async def on_message(message):
                 if queryStr[0] == "?": 
                     respMessage = "```markdown\n" + usage + "```\n"
                 elif queryStr[0] in ("釋字", "大法官解釋", "釋", ):
-                    respMessage = JIArcFind(queryStr[1])
+                    respMessage =  find_judicial_interpretation_text(queryStr[1])
                 elif flag or queryStr[0] in queryDict:
-                    respMessage = lawArcFind(queryStr)
+                    respMessage = find_law_article(queryStr)
             except Exception as e:
                 await message.channel.send("誒都，閣下的指令格式我解析有點問題誒QQ\n" + "可以輸入 !? 以獲得使用說明\n") 
                 print(e)
