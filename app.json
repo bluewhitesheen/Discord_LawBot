@@ -9,7 +9,7 @@
     }
   ],
   "env": {
-    "TOKEN": {
+    "DISCORD_TOKEN": {
       "description": "Discord Bot Token",
       "required": true
     },
@@ -19,7 +19,7 @@
     }
   },
   "formation": {
-    "web": {
+    "worker": {
       "quantity": 1,
       "size": "eco"
     }
