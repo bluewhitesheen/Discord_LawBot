@@ -1,7 +1,7 @@
 import os, ast, discord, re, requests, roman, time
 from parsel import Selector
 from dotenv import load_dotenv
-from utils import lawNameMatching, regulationNameReplacing, queryStrPreprocess, splitMsg, lawSoup
+from utils import law_name_matching, regulation_name_replacing, query_str_preprocess, split_msg, soupify
 
 BASE_DIR = os.path.abspath(os.path.join(__file__, '..', '..'))
 lawDict = ast.literal_eval(open(os.path.join(BASE_DIR, "res/lawDict.txt"), "r", encoding='utf-8').read())
@@ -19,7 +19,7 @@ def CJfind(queryStr):
     else:
         print('The file does not exist.')
         cjNum = {} 
-        tmpsoup = lawSoup('https://cons.judicial.gov.tw/judcurrentNew1.aspx?fid=38').find('div', class_ = 'judgmentTabCont').find_all('li')
+        tmpsoup = soupify('https://cons.judicial.gov.tw/judcurrentNew1.aspx?fid=38').find('div', class_ = 'judgmentTabCont').find_all('li')
         cjList = [item for item in tmpsoup if len(item.text) > 9]
         for item in cjList:
             year, num = re.findall(r'\d+', item.text)

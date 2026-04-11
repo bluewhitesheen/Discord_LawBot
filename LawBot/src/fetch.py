@@ -2,7 +2,7 @@
 
 import os, re, requests
 from parsel import Selector
-from utils import lawSoup
+from utils import soupify
 
 def fetch_cj_numbers():
     BASE_DIR = os.path.abspath(os.path.join(__file__, '..', '..'))
@@ -11,7 +11,7 @@ def fetch_cj_numbers():
     cjNum = {} 
     localCJList = os.listdir(CJArc)
 
-    tmpsoup = lawSoup('https://cons.judicial.gov.tw/judcurrentNew1.aspx?fid=38').find('div', class_='judgmentTabCont').find_all('li')
+    tmpsoup = soupify('https://cons.judicial.gov.tw/judcurrentNew1.aspx?fid=38').find('div', class_='judgmentTabCont').find_all('li')
     cjList = [item for item in tmpsoup if len(item.text) > 9]
     for item in cjList:
         year, num = re.findall(r'\d+', item.text)

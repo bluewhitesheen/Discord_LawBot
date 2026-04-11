@@ -9,51 +9,57 @@ from urllib3.exceptions import InsecureRequestWarning
 # Disable insecure request warnings
 requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
-def lawNameMatching(s0: str, s1: str):
-    currentLocation = 0
-    for ch in s0:
-        currentLocation = s1.find(ch, currentLocation)
-        if currentLocation == -1: return False
+LAW_NAME_POSTFIX = ("規則", "細則", "辦法", "綱要", "準則", "規程", "標準", "條例", "通則", "法", "律")
+
+
+def law_name_matching(source: str, target: str):
+    current_location = 0
+    for ch in source:
+        current_location = target.find(ch, current_location)
+        if current_location == -1: return False
     return True
 
-def regulationNameReplacing(s: str):
-    lawNamePostfix = ["規則", "細則", "辦法", "綱要", "準則", "規程", "標準", "條例", "通則", "法", "律"]
-    for i in lawNamePostfix:
-        if s.endswith(i): 
-            s = s[:-len(i)]
+
+def regulation_name_replacing(name: str):
+    for postfix in LAW_NAME_POSTFIX:
+        if name.endswith(postfix): 
+            name = name[:-len(postfix)]
             break 
-    return s
+    return name
 
-def queryStrPreprocess(queryStr: str):
-    queryList = []
-    match_result = re.fullmatch('([\u4e00-\u9fff\\?]*)([0-9-]*)([IVX]*)', queryStr, re.I)
+
+def query_str_preprocess(query_str: str):
+    query_list = []
+    match_result = re.fullmatch('([\u4e00-\u9fff\\?]*)([0-9-]*)([IVX]*)', query_str, re.I)
     if match_result: 
-        queryList = list(match_result.groups())
-        if queryList[-1] == '': queryList = queryList[:-1]
+        query_list = list(match_result.groups())
+        if query_list[-1] == '': query_list = query_list[:-1]
     try: 
-        queryList[-1] = roman.fromRoman(queryList[-1])
+        query_list[-1] = roman.fromRoman(query_list[-1])
     except: pass
-    if len(queryList) == 0: return queryList
-    queryList[0] = regulationNameReplacing(queryList[0])
-    return queryList
+    if len(query_list) == 0: return query_list
+    query_list[0] = regulation_name_replacing(query_list[0])
+    return query_list
 
-def splitMsg(respMessage: str):
+
+def split_msg(resp_message: str):
     result = []
-    L = 0
-    if len(respMessage) < 2000: return [respMessage]
-    while L < len(respMessage) - 1:
-        R = respMessage.rfind('\n', L, L + 2000)
-        result.append(respMessage[L: R+1])
-        L = R
+    left = 0
+    if len(resp_message) < 2000: return [resp_message]
+    while left < len(resp_message) - 1:
+        right = resp_message.rfind('\n', left, left + 2000)
+        result.append(resp_message[left: right+1])
+        left = right
     return result
 
-def requestsGet(url: str):
-    resp = requests.session()
-    resp.keep_alive = False
-    resp = resp.get(url, headers={'Connection': 'close'},  verify=False)
-    return resp
+def requests_get(url: str):
+    session = requests.session()
+    session.keep_alive = False
+    response = session.get(url, headers={'Connection': 'close'},  verify=False)
+    return response
 
-def lawSoup(url: str):
-    resp = requestsGet(url)
-    soup = BeautifulSoup(resp.text, "lxml")
+
+def soupify(url: str):
+    response = requests_get(url)
+    soup = BeautifulSoup(response.text, "lxml")
     return soup

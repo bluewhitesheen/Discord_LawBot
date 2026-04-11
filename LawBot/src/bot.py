@@ -3,7 +3,7 @@
 from parsel import Selector
 from dotenv import load_dotenv
 import os, ast, discord, re, requests, roman
-from utils import lawNameMatching, regulationNameReplacing, queryStrPreprocess, splitMsg, lawSoup
+from utils import LAW_NAME_POSTFIX, law_name_matching, regulation_name_replacing, query_str_preprocess, split_msg, soupify
 from fetch import fetch_cj_numbers, fetch_and_save_cj
 
 intents = discord.Intents.default()
@@ -26,13 +26,18 @@ def load_law_resources(base_dir: str):
     return law_dict, law_name_dict, query_dict
 
 
+def load_usage(base_dir: str):
+    with open(os.path.join(base_dir, "usage.md"), "r", encoding="utf-8") as f:
+        return f.read()
+
+
 BASE_DIR = os.path.abspath(os.path.join(__file__, '..', '..'))
 lawDict, lawNameDict, queryDict = load_law_resources(BASE_DIR)
+usage = load_usage(BASE_DIR)
 
 # default_law_code stands for the default law code value for https://https://law.moj.gov.tw/LawClass/LawSingle.aspx?PCode= when the user input only article number without law name.
 default_law_code = "A0030055"
-lawNamePostfix = ["規則", "細則", "辦法", "綱要", "準則", "規程", "標準", "條例", "通則", "法", "律"]
-
+law_name_postfix = LAW_NAME_POSTFIX
 
 def parse_judicial_judgment_query(queryStr: str):
     queryList = []
@@ -44,9 +49,9 @@ def parse_judicial_judgment_query(queryStr: str):
 def find_law_code(law: str) -> str:
     candidateLawName = []
     for i in lawNameDict:
-        if lawNameMatching(law, i): candidateLawName.append(i)
+        if law_name_matching(law, i): candidateLawName.append(i)
     if len(candidateLawName) == 0: 
-        table = lawSoup('https://law.moj.gov.tw/Law/LawSearchResult.aspx?cur=Ln&ty=ONEBAR&kw=' + law + '&psize=60').find('table')
+        table = soupify('https://law.moj.gov.tw/Law/LawSearchResult.aspx?cur=Ln&ty=ONEBAR&kw=' + law + '&psize=60').find('table')
         try:
             result = [link for link in table.find_all('td')][1::2]
             result_pair = []
@@ -88,7 +93,7 @@ def find_law_article(queryList):
     respMessage = ""
     try:
         print(url)
-        soup = lawSoup(url)
+        soup = soupify(url)
         temp, ttemp = [], ""
         art = soup.select('div.law-article')[0].select('div')
         art = [str(i).replace(" show-number", "").replace("</div>","").replace('<div class="line-0000">', '0') for i in art]
@@ -157,7 +162,7 @@ async def on_message(message):
         if "管理員" in roles or "討論活動負責人" in roles or message.author.id in [396656022241935362, ]:
             queryStr = queryStr.replace("set", "set ")
             lawName = queryStr.split()[1]
-            lawName = regulationNameReplacing(lawName)
+            lawName = regulation_name_replacing(lawName)
             if lawName in queryDict:
                 default_law_code = queryDict[lawName]
                 await message.channel.send("預設法規變更摟!\n")
@@ -172,7 +177,7 @@ async def on_message(message):
             if queryStr[0] == '!':
                 flag = 1
                 queryStr = queryStr[1:]
-            queryStr = queryStrPreprocess(queryStr)
+            queryStr = query_str_preprocess(queryStr)
             if queryStr == [] or queryStr[1] == '': return 
             print(queryStr)
             try:
@@ -190,7 +195,7 @@ async def on_message(message):
             await message.channel.send('誒都，找不到閣下的法條誒QQ\n搜尋冷門法條時，建議不要打法條簡稱喔！\n')
             return
         if len(respMessage): 
-            respMessage = splitMsg(respMessage)
+            respMessage = split_msg(respMessage)
             for i in respMessage: await message.channel.send(i)
         
 
