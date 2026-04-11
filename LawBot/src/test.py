@@ -1,7 +1,7 @@
 import os, ast, discord, re, requests, roman, time
 from parsel import Selector
 from dotenv import load_dotenv
-from utils import law_name_matching, regulation_name_replacing, query_str_preprocess, split_msg, soupify
+from utils import law_name_matching, remove_law_postfix, query_str_preprocess, split_msg, soupify
 
 BASE_DIR = os.path.abspath(os.path.join(__file__, '..', '..'))
 lawDict = ast.literal_eval(open(os.path.join(BASE_DIR, "res/lawDict.txt"), "r", encoding='utf-8').read())

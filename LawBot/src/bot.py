@@ -3,7 +3,7 @@
 from parsel import Selector
 from dotenv import load_dotenv
 import os, ast, discord, re, requests, roman
-from utils import LAW_NAME_POSTFIX, law_name_matching, regulation_name_replacing, query_str_preprocess, split_msg, soupify
+from utils import LAW_NAME_POSTFIX, law_name_matching, remove_law_postfix, query_str_preprocess, split_msg, soupify
 from fetch import fetch_cj_numbers, fetch_and_save_cj
 
 intents = discord.Intents.default()
@@ -162,7 +162,7 @@ async def on_message(message):
         if "管理員" in roles or "討論活動負責人" in roles or message.author.id in [396656022241935362, ]:
             queryStr = queryStr.replace("set", "set ")
             lawName = queryStr.split()[1]
-            lawName = regulation_name_replacing(lawName)
+            lawName = remove_law_postfix(lawName)
             if lawName in queryDict:
                 default_law_code = queryDict[lawName]
                 await message.channel.send("預設法規變更摟!\n")
